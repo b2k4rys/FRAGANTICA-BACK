@@ -11,3 +11,8 @@ router = APIRouter(prefix="/fragrance", tags=['Fragrance routes'])
 @router.post("/new-fragrance")
 async def add_fragrance(fragrance_data: FragranceSchema, session: AsyncSession = Depends(get_async_session)):
     return await add_new_fragrance(session, fragrance_data)
+
+
+@router.post("/new-company")
+async def add_new_company():
+    pass
