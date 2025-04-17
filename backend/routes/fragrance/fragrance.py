@@ -35,7 +35,7 @@ async def add_company(company_data: CompanySchema, session: AsyncSession = Depen
 
 
 # -- PATCH -- 
-@router.patch("/edit-fragrance/{fragrance_id}")
+@router.patch("/all/{fragrance_id}")
 async def edit_fragrance(fragrance_id: int, updated_fragrance_data: FragranceUpdate, session: AsyncSession = Depends(get_async_session)):
     return await change_fragrance(fragrance_id, session, updated_fragrance_data)
 

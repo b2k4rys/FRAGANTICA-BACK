@@ -35,16 +35,18 @@ async def get_all_companies(session: AsyncSession):
             raise HTTPException(status_code=404, detail="Not found")
     return companies
 
-async def change_fragrance( fragrance_id: int , session: AsyncSession, updated_fragrance_data:FragranceUpdate):
+async def change_fragrance( fragrance_id: int, session: AsyncSession, updated_fragrance_data:FragranceUpdate):
     db_item = select(Fragrance).filter_by(id=fragrance_id)
     
     result = await session.execute(db_item)
     fragrance = result.scalar_one()
 
+
     if fragrance is None:
         raise HTTPException(status_code=404, detail="Item not found")
   
     update_item = updated_fragrance_data.model_dump(exclude_unset=True)
+ 
     
     for key, value in update_item.items():
         setattr(fragrance, key, value)

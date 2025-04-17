@@ -4,6 +4,9 @@ from backend.core.db.models.fragrance import FragranceType
 class FragranceSchema(BaseModel):
     name: str = Field(min_length=3, max_length=150)
     company: "CompanySchema"
+    description: str | None = None
+    fragrance_type: FragranceType
+    price: int 
     class Config:
         orm_mode = True
 
@@ -13,8 +16,9 @@ class FragranceRequestSchema(BaseModel):
     description: str | None = None
     fragrance_type: FragranceType
     price: int 
+
 class FragranceUpdate(BaseModel):
-    name: str | None = Field(min_length=3, max_length=150) 
+    name: str | None = Field(default=None, min_length=3, max_length=150) 
     company_id: int | None = None
     fragrance_type: FragranceType | None = None
     description: str | None = None
