@@ -3,7 +3,7 @@ from backend.core.db.models.fragrance import Fragrance, Company
 from .schemas import FragranceSchema, CompanySchema, ListFragranceResponseSchema, FragranceUpdate
 from sqlalchemy import select, update
 from sqlalchemy.orm import selectinload
-from fastapi import HTTPException
+from fastapi import HTTPException, Response
 
 async def add_new_fragrance(session: AsyncSession, fragrance_data: FragranceSchema):
     new_fragrance = Fragrance(**fragrance_data.model_dump())
@@ -49,8 +49,17 @@ async def get_fragrance_by_id(fragrance_id: int, session: AsyncSession):
     stmt = select(Fragrance).filter_by(id=fragrance_id)
     result = await session.execute(stmt)
     fragrance = result.scalar_one()
-    if not fragrance:
+    if fragrance is None:
         raise HTTPException(status_code=404, detail="Item not found")
     return fragrance
 
 
+async def delete_fragrance_by_id(fragrance_id: int, session: AsyncSession):
+    stmt = select(Fragrance).filter_by(id=fragrance_id)
+    result = await session.execute(stmt)
+    fragrance = result.scalar_one()
+    if fragrance is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+    await session.delete(fragrance)
+    await session.commit()
+    return Response(status_code=200, content="Item was deleted")

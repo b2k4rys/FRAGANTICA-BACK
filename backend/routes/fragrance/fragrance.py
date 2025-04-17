@@ -3,7 +3,7 @@ from .schemas import FragranceSchema, CompanySchema, FragranceUpdate
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 from typing import List
-from .crud import add_new_fragrance, add_new_company, get_all_fragrances, change_fragrance, get_fragrance_by_id
+from .crud import add_new_fragrance, add_new_company, get_all_fragrances, change_fragrance, get_fragrance_by_id, delete_fragrance_by_id
 from backend.core.db.session import get_async_session
 from backend.core.db.models.fragrance import Fragrance
 
@@ -36,3 +36,9 @@ async def add_company(company_data: CompanySchema, session: AsyncSession = Depen
 @router.patch("/edit-fragrance/{fragrance_id}")
 async def edit_fragrance(fragrance_id: int, updated_fragrance_data: FragranceUpdate, session: AsyncSession = Depends(get_async_session)):
     return await change_fragrance(fragrance_id, session, updated_fragrance_data)
+
+
+# -- DELETE -- 
+@router.delete("/all/{fragrance_id}")
+async def delete_fragrance(fragrance_id: int,session: AsyncSession = Depends(get_async_session)):
+    return await delete_fragrance_by_id(fragrance_id, session)
