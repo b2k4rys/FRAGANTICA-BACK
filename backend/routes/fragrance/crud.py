@@ -1,11 +1,11 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.core.db.models.fragrance import Fragrance, Company
-from .schemas import FragranceSchema, CompanySchema, ListFragranceResponseSchema, FragranceUpdate
+from .schemas import FragranceSchema, CompanySchema, ListFragranceResponseSchema, FragranceUpdate, FragranceRequestSchema
 from sqlalchemy import select, update
 from sqlalchemy.orm import selectinload
 from fastapi import HTTPException, Response
 
-async def add_new_fragrance(session: AsyncSession, fragrance_data: FragranceSchema):
+async def add_new_fragrance(session: AsyncSession, fragrance_data: FragranceRequestSchema):
     new_fragrance = Fragrance(**fragrance_data.model_dump())
     session.add(new_fragrance)
     await session.commit()
@@ -24,8 +24,16 @@ async def get_all_fragrances(session: AsyncSession):
     result = await session.execute(stmt)
     fragrances = result.scalars().all()
     if not fragrances:
-        raise HTTPException(status_code=404, detail="No users found")
+        raise HTTPException(status_code=404, detail="Not found")
     return fragrances
+
+async def get_all_companies(session: AsyncSession):
+    stmt = select(Company)
+    result = await session.execute(stmt)
+    companies = result.scalars().all()
+    if not companies:
+            raise HTTPException(status_code=404, detail="Not found")
+    return companies
 
 async def change_fragrance( fragrance_id: int , session: AsyncSession, updated_fragrance_data:FragranceUpdate):
     db_item = select(Fragrance).filter_by(id=fragrance_id)

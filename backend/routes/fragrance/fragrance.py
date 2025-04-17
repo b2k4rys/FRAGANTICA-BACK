@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends
-from .schemas import FragranceSchema, CompanySchema, FragranceUpdate
+from .schemas import FragranceSchema, CompanySchema, FragranceUpdate, FragranceRequestSchema
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 from typing import List
-from .crud import add_new_fragrance, add_new_company, get_all_fragrances, change_fragrance, get_fragrance_by_id, delete_fragrance_by_id
+from .crud import add_new_fragrance, add_new_company, get_all_fragrances, change_fragrance, get_fragrance_by_id, delete_fragrance_by_id, get_all_companies
 from backend.core.db.session import get_async_session
 from backend.core.db.models.fragrance import Fragrance
 
@@ -20,10 +20,12 @@ async def get_fragrances(session: AsyncSession = Depends(get_async_session)):
 async def get_fragrance(fragrance_id: int,session: AsyncSession = Depends(get_async_session)):
     return await get_fragrance_by_id(fragrance_id, session)
 
-
+@router.get("/company/all")
+async def get_all_company(session: AsyncSession  = Depends(get_async_session)):
+    return await get_all_companies(session)
 # -- POST -- 
 @router.post("/new-fragrance")
-async def add_fragrance(fragrance_data: FragranceSchema, session: AsyncSession = Depends(get_async_session)):
+async def add_fragrance(fragrance_data: FragranceRequestSchema, session: AsyncSession = Depends(get_async_session)):
     return await add_new_fragrance(session, fragrance_data)
 
 
