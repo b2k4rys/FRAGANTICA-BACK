@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.core.db.models.fragrance import Fragrance, Company
-from .schemas import FragranceSchema, CompanySchema, ListFragranceResponseSchema
-from sqlalchemy import select
+from .schemas import FragranceSchema, CompanySchema, ListFragranceResponseSchema, FragranceUpdate
+from sqlalchemy import select, update
 from sqlalchemy.orm import selectinload
 from fastapi import HTTPException
 
@@ -27,11 +27,28 @@ async def get_all_fragrances(session: AsyncSession):
         raise HTTPException(status_code=404, detail="No users found")
     return fragrances
 
-async def change_fragrance( fragrance_id: int ,session: AsyncSession):
-    stmt = select(Fragrance).filter_by(id=fragrance_id)
-    result = await session.execute(stmt)
-    fragrance = result.scalar_one_or_none()
+async def change_fragrance( fragrance_id: int , session: AsyncSession, updated_fragrance_data:FragranceUpdate):
+    db_item = select(Fragrance).filter_by(id=fragrance_id)
+    
+    result = await session.execute(db_item)
+    fragrance = result.scalar_one()
+
+ 
+
     if fragrance is None:
         raise HTTPException(status_code=404, detail="Item not found")
+  
+
+    update_item = updated_fragrance_data.model_dump(exclude_unset=True)
+    
+
+    for key, value in update_item.items():
+        setattr(fragrance, key, value)
+
+    await session.commit()
+    await session.refresh(fragrance)
+    return fragrance
+
+
 
 
