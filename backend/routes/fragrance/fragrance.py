@@ -13,8 +13,8 @@ router = APIRouter(prefix="/fragrance", tags=['Fragrance routes'])
 
 # -- GET -- 
 @router.get("/all", response_model=List[FragranceSchema])
-async def get_fragrances(session: AsyncSession = Depends(get_async_session)):
-    return await get_all_fragrances(session)
+async def get_fragrances(session: AsyncSession = Depends(get_async_session), company_name: str | None = None):
+    return await get_all_fragrances(session, company_name)
 
 @router.get("/all/{fragrance_id}")
 async def get_fragrance(fragrance_id: int,session: AsyncSession = Depends(get_async_session)):

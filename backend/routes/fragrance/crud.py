@@ -19,8 +19,17 @@ async def add_new_company(session: AsyncSession, company_data: CompanySchema):
     await session.refresh(new_company)
     return new_company
 
-async def get_all_fragrances(session: AsyncSession):
-    stmt = select(Fragrance).options(selectinload(Fragrance.company))
+async def get_all_fragrances(session: AsyncSession, company_name: str | None = None):
+
+    if company_name:
+        stmt = (
+            select(Fragrance)
+            .join(Fragrance.company)
+            .filter(Company.name.ilike(f"%{company_name}%"))
+            .options(selectinload(Fragrance.company))
+        )
+    else:
+        stmt = select(Fragrance).options(selectinload(Fragrance.company))
     result = await session.execute(stmt)
     fragrances = result.scalars().all()
     if not fragrances:
