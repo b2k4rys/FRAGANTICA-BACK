@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from backend.core.db.models.fragrance import Fragrance, Company
+from backend.core.db.models.fragrance import Fragrance, Company, FragranceType
 from .schemas import FragranceSchema, CompanySchema, ListFragranceResponseSchema, FragranceUpdate, FragranceRequestSchema
 from sqlalchemy import select, update
 from sqlalchemy.orm import selectinload
@@ -19,17 +19,17 @@ async def add_new_company(session: AsyncSession, company_data: CompanySchema):
     await session.refresh(new_company)
     return new_company
 
-async def get_all_fragrances(session: AsyncSession, company_name: str | None = None):
+async def get_all_fragrances(session: AsyncSession, company_name: str | None = None, fragrance_type: FragranceType | None = None ):
+    filters = []
+    
 
     if company_name:
-        stmt = (
-            select(Fragrance)
-            .join(Fragrance.company)
-            .filter(Company.name.ilike(f"%{company_name}%"))
-            .options(selectinload(Fragrance.company))
-        )
-    else:
-        stmt = select(Fragrance).options(selectinload(Fragrance.company))
+        company_name = company_name.strip()
+        filters.append(Company.name.ilike(f"%{company_name}%"))
+    if fragrance_type:
+        filters.append(Fragrance.fragrance_type == fragrance_type)
+    
+    stmt = select(Fragrance).join(Company).filter(*filters).options(selectinload(Fragrance.company))
     result = await session.execute(stmt)
     fragrances = result.scalars().all()
     if not fragrances:

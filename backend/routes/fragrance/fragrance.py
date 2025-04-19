@@ -5,7 +5,7 @@ from sqlalchemy import select, update
 from typing import List
 from .crud import add_new_fragrance, add_new_company, get_all_fragrances, change_fragrance, get_fragrance_by_id, delete_fragrance_by_id, get_all_companies
 from backend.core.db.session import get_async_session
-from backend.core.db.models.fragrance import Fragrance
+from backend.core.db.models.fragrance import Fragrance, FragranceType
 
 router = APIRouter(prefix="/fragrance", tags=['Fragrance routes'])
 
@@ -13,8 +13,8 @@ router = APIRouter(prefix="/fragrance", tags=['Fragrance routes'])
 
 # -- GET -- 
 @router.get("/all", response_model=List[FragranceSchema])
-async def get_fragrances(session: AsyncSession = Depends(get_async_session), company_name: str | None = None):
-    return await get_all_fragrances(session, company_name)
+async def get_fragrances(session: AsyncSession = Depends(get_async_session), company_name: str | None = None, fragrance_type: FragranceType | None = None):
+    return await get_all_fragrances(session, company_name, fragrance_type)
 
 @router.get("/all/{fragrance_id}")
 async def get_fragrance(fragrance_id: int,session: AsyncSession = Depends(get_async_session)):
