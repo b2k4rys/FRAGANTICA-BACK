@@ -23,6 +23,7 @@ class Fragrance(Base):
     company: Mapped["Company"] = relationship("Company", back_populates="fragrances")
     price: Mapped[int] = mapped_column(Integer, nullable=True)
     fragrance_type: Mapped[FragranceType] = mapped_column(SqlEnum(FragranceType))
+    ml: Mapped[int] = mapped_column(Integer,nullable=True)
 
 
 class Company(Base):
