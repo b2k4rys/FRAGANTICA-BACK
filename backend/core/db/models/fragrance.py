@@ -44,3 +44,15 @@ class Accord(Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     name: Mapped[str] = mapped_column(String(150))
     description: Mapped[str] = mapped_column(Text)
+    group_id: Mapped[int] = mapped_column(ForeignKey("accord_group.id"), index = True)
+    accord_group: Mapped["AccordGroup"] = relationship(back_populates="accord")
+
+    
+class AccordGroup(Base):
+    __tablename__ = "accord_groups"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    name: Mapped[str] = mapped_column(String(150))
+    description: Mapped[str] = mapped_column(Text)
+    accords: Mapped[List["Accord"]] = relationship(back_populates="accord_group")
+    

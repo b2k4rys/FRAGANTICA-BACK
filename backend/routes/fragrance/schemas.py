@@ -41,3 +41,8 @@ class ListFragranceResponseSchema(BaseModel):
     fragrance: List[FragranceSchema]
     class Config:
         orm_mode = True
+
+
+class AccordRequestSchema(BaseModel):
+    name: str
+    description: str

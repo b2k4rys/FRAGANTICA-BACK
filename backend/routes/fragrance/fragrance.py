@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends
-from .schemas import FragranceSchema, CompanySchema, FragranceUpdate, FragranceRequestSchema
+from .schemas import FragranceSchema, CompanySchema, FragranceUpdate, FragranceRequestSchema, AccordRequestSchema
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 from typing import List
 from .crud import add_new_fragrance, add_new_company, get_all_fragrances, change_fragrance, get_fragrance_by_id, delete_fragrance_by_id, get_all_companies
 from backend.core.db.session import get_async_session
 from backend.core.db.models.fragrance import Fragrance, FragranceType
-
+from ..fragrance import crud
 router = APIRouter(prefix="/fragrance", tags=['Fragrance routes'])
 
 
@@ -45,3 +45,8 @@ async def edit_fragrance(fragrance_id: int, updated_fragrance_data: FragranceUpd
 @router.delete("/all/{fragrance_id}")
 async def delete_fragrance(fragrance_id: int,session: AsyncSession = Depends(get_async_session)):
     return await delete_fragrance_by_id(fragrance_id, session)
+
+
+@router.post("/accords/")
+async def add_accord(accord: AccordRequestSchema, session: AsyncSession = Depends(get_async_session)):
+    return await crud.add_accord(session, accord)
