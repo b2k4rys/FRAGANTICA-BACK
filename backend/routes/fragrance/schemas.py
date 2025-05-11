@@ -9,6 +9,7 @@ class FragranceSchema(BaseModel):
     fragrance_type: FragranceType
     price: int 
     ml: int | None = None
+    picture: str | None = None
     class Config:
         orm_mode = True
 
@@ -27,6 +28,7 @@ class FragranceUpdate(BaseModel):
     description: str | None = None
     price: int | None = None
     ml: int | None = None
+    picture: str | None = None
     
 class CompanySchema(BaseModel):
     name: str = Field(min_length=3, max_length=150)

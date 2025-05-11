@@ -21,8 +21,6 @@ async def add_new_company(session: AsyncSession, company_data: CompanySchema):
 
 async def get_all_fragrances(session: AsyncSession, company_name: str | None = None, fragrance_type: FragranceType | None = None ):
     filters = []
-    
-
     if company_name:
         company_name = company_name.strip()
         filters.append(Company.name.ilike(f"%{company_name}%"))

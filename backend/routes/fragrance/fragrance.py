@@ -23,6 +23,7 @@ async def get_fragrance(fragrance_id: int,session: AsyncSession = Depends(get_as
 @router.get("/company/all")
 async def get_all_company(session: AsyncSession  = Depends(get_async_session)):
     return await get_all_companies(session)
+
 # -- POST -- 
 @router.post("/new-fragrance")
 async def add_fragrance(fragrance_data: FragranceRequestSchema, session: AsyncSession = Depends(get_async_session)):

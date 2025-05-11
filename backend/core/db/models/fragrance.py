@@ -1,5 +1,5 @@
 from backend.core.db.session import Base
-from sqlalchemy import Column, BigInteger, String, Text, ForeignKey, Integer
+from sqlalchemy import Column, BigInteger, String, Text, ForeignKey, Integer, URL
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from typing import List
 from enum import Enum
@@ -24,6 +24,7 @@ class Fragrance(Base):
     price: Mapped[int] = mapped_column(Integer, nullable=True)
     fragrance_type: Mapped[FragranceType] = mapped_column(SqlEnum(FragranceType))
     ml: Mapped[int] = mapped_column(Integer,nullable=True)
+    picture: Mapped[str] = mapped_column(String, nullable=True)
 
 
 class Company(Base):
