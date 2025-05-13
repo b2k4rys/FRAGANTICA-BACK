@@ -30,7 +30,7 @@ class FragranceUpdate(BaseModel):
     price: int | None = None
     ml: int | None = None
     picture: str | None = None
-    accords: List["AccordRequestSchema"] | None = None
+    accords: list[int] | None = None
     
 class CompanySchema(BaseModel):
     name: str = Field(min_length=3, max_length=150)

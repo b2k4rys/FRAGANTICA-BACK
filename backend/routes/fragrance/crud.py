@@ -42,25 +42,43 @@ async def get_all_companies(session: AsyncSession):
             raise HTTPException(status_code=404, detail="Not found")
     return companies
 
-async def change_fragrance( fragrance_id: int, session: AsyncSession, updated_fragrance_data:FragranceUpdate):
-    db_item = select(Fragrance).filter_by(id=fragrance_id)
-    
-    result = await session.execute(db_item)
-    fragrance = result.scalar_one()
 
+async def change_fragrance(
+    fragrance_id: int,
+    session: AsyncSession,
+    updated_fragrance_data: FragranceUpdate
+):
+    stmt = select(Fragrance).options(selectinload(Fragrance.accords)).filter_by(id=fragrance_id)
+    result = await session.execute(stmt)
+    fragrance = result.scalar_one_or_none()
 
     if fragrance is None:
         raise HTTPException(status_code=404, detail="Item not found")
-  
-    update_item = updated_fragrance_data.model_dump(exclude_unset=True)
- 
-    
-    for key, value in update_item.items():
-        setattr(fragrance, key, value)
+
+    update_data = updated_fragrance_data.model_dump(exclude_unset=True)
+
+
+    for key, value in update_data.items():
+        if key != "accords":
+            setattr(fragrance, key, value)
+
+
+    if "accords" in update_data:
+        accord_ids = update_data["accords"] or []
+        if accord_ids:
+            result = await session.execute(select(Accord).where(Accord.id.in_(accord_ids)))
+            accords = result.scalars().all()
+            if len(accords) != len(accord_ids):
+                raise HTTPException(status_code=400, detail="One or more accord_ids are invalid")
+        else:
+            accords = []
+
+        fragrance.accords = accords
 
     await session.commit()
     await session.refresh(fragrance)
     return fragrance
+
 
 async def get_fragrance_by_id(fragrance_id: int, session: AsyncSession):
     stmt = select(Fragrance).filter_by(id=fragrance_id)
