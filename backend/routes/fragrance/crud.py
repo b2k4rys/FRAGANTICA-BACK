@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from backend.core.db.models.fragrance import Fragrance, Company, FragranceType, Accord
-from .schemas import FragranceSchema, CompanySchema, ListFragranceResponseSchema, FragranceUpdate, FragranceRequestSchema, AccordRequestSchema
+from backend.core.db.models.fragrance import Fragrance, Company, FragranceType, Accord, AccordGroup
+from .schemas import FragranceSchema, CompanySchema, ListFragranceResponseSchema, FragranceUpdate, FragranceRequestSchema, AccordRequestSchema, AccordGroupRequestSchema
 from sqlalchemy import select, update
 from sqlalchemy.orm import selectinload
 from fastapi import HTTPException, Response
@@ -86,9 +86,17 @@ async def delete_fragrance_by_id(fragrance_id: int, session: AsyncSession):
 
 #  ACCORDS
 
-async def add_accord(session: AsyncSession, accord: AccordRequestSchema):
+async def add_accord(accord: AccordRequestSchema, session: AsyncSession):
     new_accord = Accord(**accord.model_dump())
     session.add(new_accord)
     await session.commit()
     await session.refresh(new_accord)
     return new_accord
+
+async def add_accord_group(accord_group: AccordGroupRequestSchema, session: AsyncSession):
+    new_accord_group = AccordGroup(**accord_group.model_dump())
+    session.add(new_accord_group)
+    await session.commit()
+    await session.refresh(new_accord_group)
+    return new_accord_group
+

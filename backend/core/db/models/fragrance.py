@@ -1,5 +1,5 @@
 from backend.core.db.session import Base
-from sqlalchemy import Column, BigInteger, String, Text, ForeignKey, Integer, URL
+from sqlalchemy import BigInteger, String, Text, ForeignKey, Integer, Table, Column
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from typing import List
 from enum import Enum
@@ -13,6 +13,14 @@ class FragranceType(Enum):
     par = "Parfum"
     edt = "Eau de Toilette"
 
+
+fragrance_accords_relationship = Table(
+    "fragrance_accords_relationship",
+    Base.metadata,
+    Column("fragrance_id", ForeignKey("fragrance.id"), primary_key=True),
+    Column("accord_id", ForeignKey("accord.id"), primary_key=True)
+)
+
 class Fragrance(Base):
     __tablename__ = "fragrance"
 
@@ -25,6 +33,8 @@ class Fragrance(Base):
     fragrance_type: Mapped[FragranceType] = mapped_column(SqlEnum(FragranceType))
     ml: Mapped[int] = mapped_column(Integer,nullable=True)
     picture: Mapped[str] = mapped_column(String, nullable=True)
+
+    accords: Mapped[List["Accord"]] = relationship(back_populates="fragrances", secondary=fragrance_accords_relationship)
 
 
 class Company(Base):
@@ -44,8 +54,10 @@ class Accord(Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     name: Mapped[str] = mapped_column(String(150))
     description: Mapped[str] = mapped_column(Text)
-    group_id: Mapped[int] = mapped_column(ForeignKey("accord_group.id"), index = True)
-    accord_group: Mapped["AccordGroup"] = relationship(back_populates="accord")
+    group_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("accord_groups.id"), index = True)
+    accord_group: Mapped["AccordGroup"] = relationship(back_populates="accords")
+
+    fragrances: Mapped[List["Fragrance"]] = relationship(back_populates="accords", secondary=fragrance_accords_relationship)
 
     
 class AccordGroup(Base):
@@ -55,4 +67,5 @@ class AccordGroup(Base):
     name: Mapped[str] = mapped_column(String(150))
     description: Mapped[str] = mapped_column(Text)
     accords: Mapped[List["Accord"]] = relationship(back_populates="accord_group")
+
     

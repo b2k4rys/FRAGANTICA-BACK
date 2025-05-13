@@ -46,3 +46,8 @@ class ListFragranceResponseSchema(BaseModel):
 class AccordRequestSchema(BaseModel):
     name: str
     description: str
+    group_id: int
+
+class AccordGroupRequestSchema(BaseModel):
+    name: str
+    description: str

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from .schemas import FragranceSchema, CompanySchema, FragranceUpdate, FragranceRequestSchema, AccordRequestSchema
+from .schemas import FragranceSchema, CompanySchema, FragranceUpdate, FragranceRequestSchema, AccordRequestSchema, AccordGroupRequestSchema
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 from typing import List
@@ -47,6 +47,14 @@ async def delete_fragrance(fragrance_id: int,session: AsyncSession = Depends(get
     return await delete_fragrance_by_id(fragrance_id, session)
 
 
+
+
+# ACCORDS 
 @router.post("/accords/")
 async def add_accord(accord: AccordRequestSchema, session: AsyncSession = Depends(get_async_session)):
-    return await crud.add_accord(session, accord)
+    return await crud.add_accord(accord, session)
+
+
+@router.post("/accords/group")
+async def add_accord_group(accord_group: AccordGroupRequestSchema, session: AsyncSession = Depends(get_async_session)):
+    return await crud.add_accord_group(accord_group, session)
