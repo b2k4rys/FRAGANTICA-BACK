@@ -50,6 +50,11 @@ async def delete_fragrance(fragrance_id: int,session: AsyncSession = Depends(get
 
 
 # ACCORDS 
+
+@router.get("/accords")
+async def get_accords(session: AsyncSession = Depends(get_async_session)):
+    return await crud.get_accords(session)
+
 @router.post("/accords/")
 async def add_accord(accord: AccordRequestSchema, session: AsyncSession = Depends(get_async_session)):
     return await crud.add_accord(accord, session)
