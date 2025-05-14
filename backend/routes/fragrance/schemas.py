@@ -53,7 +53,12 @@ class AccordResponseSchema(BaseModel):
     name: str
     description: str
     group_id: int
+class AccordUpdateSchema(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    group_id: int | None = None
 
 class AccordGroupRequestSchema(BaseModel):
     name: str
     description: str
+

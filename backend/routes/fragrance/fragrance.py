@@ -1,14 +1,12 @@
 from fastapi import APIRouter, Depends
-from .schemas import FragranceSchema, CompanySchema, FragranceUpdate, FragranceRequestSchema, AccordRequestSchema, AccordGroupRequestSchema
+from .schemas import FragranceSchema, CompanySchema, FragranceUpdate, FragranceRequestSchema, AccordRequestSchema, AccordGroupRequestSchema, AccordUpdateSchema
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
 from typing import List
 from .crud import add_new_fragrance, add_new_company, get_all_fragrances, change_fragrance, get_fragrance_by_id, delete_fragrance_by_id, get_all_companies
 from backend.core.db.session import get_async_session
-from backend.core.db.models.fragrance import Fragrance, FragranceType
+from backend.core.db.models.fragrance import FragranceType
 from ..fragrance import crud
 router = APIRouter(prefix="/fragrance", tags=['Fragrance routes'])
-
 
 
 # -- GET -- 
@@ -46,9 +44,6 @@ async def edit_fragrance(fragrance_id: int, updated_fragrance_data: FragranceUpd
 async def delete_fragrance(fragrance_id: int,session: AsyncSession = Depends(get_async_session)):
     return await delete_fragrance_by_id(fragrance_id, session)
 
-
-
-
 # ACCORDS 
 
 @router.get("/accords")
@@ -59,6 +54,9 @@ async def get_accords(session: AsyncSession = Depends(get_async_session)):
 async def add_accord(accord: AccordRequestSchema, session: AsyncSession = Depends(get_async_session)):
     return await crud.add_accord(accord, session)
 
+@router.patch("/accords/{accord_id}")
+async def update_accord(accord_id: int, accord_update: AccordUpdateSchema, session: AsyncSession = Depends(get_async_session)):
+    return await crud.change_accord(accord_id, accord_update, session)
 
 @router.post("/accords/group")
 async def add_accord_group(accord_group: AccordGroupRequestSchema, session: AsyncSession = Depends(get_async_session)):

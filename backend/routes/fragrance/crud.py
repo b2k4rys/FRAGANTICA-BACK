@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.core.db.models.fragrance import Fragrance, Company, FragranceType, Accord, AccordGroup
-from .schemas import FragranceSchema, CompanySchema, ListFragranceResponseSchema, FragranceUpdate, FragranceRequestSchema, AccordRequestSchema, AccordGroupRequestSchema, AccordResponseSchema
-from sqlalchemy import select, update
+from .schemas import CompanySchema, FragranceUpdate, FragranceRequestSchema, AccordRequestSchema, AccordGroupRequestSchema, AccordUpdateSchema
+from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from fastapi import HTTPException, Response
 
@@ -101,9 +101,7 @@ async def delete_fragrance_by_id(fragrance_id: int, session: AsyncSession):
 
 
 
-
 #  ACCORDS
-
 
 async def get_accords(session: AsyncSession):
     stmt  = select(Accord)
@@ -112,12 +110,31 @@ async def get_accords(session: AsyncSession):
     if not accords:
         raise HTTPException(status_code=404, detail="Not found")
     return accords
+
 async def add_accord(accord: AccordRequestSchema, session: AsyncSession):
     new_accord = Accord(**accord.model_dump())
     session.add(new_accord)
     await session.commit()
     await session.refresh(new_accord)
     return new_accord
+
+async def change_accord(accord_id: int, accord_update: AccordUpdateSchema, session: AsyncSession):
+    result = await session.execute(select(Accord).filter_by(id=accord_id))
+    accord = result.scalar_one_or_none()
+
+
+    if accord is None:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    update_data = accord_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(accord, key, value)
+
+    await session.commit()
+    await session.refresh(accord)
+    return accord
+
+
 
 async def add_accord_group(accord_group: AccordGroupRequestSchema, session: AsyncSession):
     new_accord_group = AccordGroup(**accord_group.model_dump())
