@@ -5,11 +5,14 @@ from typing import List
 from enum import Enum
 from sqlalchemy import Enum as SqlEnum
 
+metadata = Base.metadata
+
 class User(Base):
+
+    __tablename__ = "users"
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, index=True)
     username: Mapped[str] = mapped_column(String(50), index=True, nullable=False)
     email: Mapped[str] = mapped_column(String(100), index=True,unique=True, nullable=False)
-    name: Mapped[str] = mapped_column(String(150))
-    surname: Mapped[str] = mapped_column(String(150))
+ 
     hashed_password: Mapped[str] = mapped_column(Text, nullable=True)
     
