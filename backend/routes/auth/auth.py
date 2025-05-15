@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from ..auth.schemas import User, UserCreate, Token
 from backend.core.db.models.user import User as UserModel
+from backend.core.db.models.user import Role
 from backend.core.configs.config import settings
 from backend.core.db.session import get_async_session
 from .services import hash_password, create_access_token, authenticate_user
@@ -12,14 +13,13 @@ router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
 
 @router.post("/register", response_model=User)
-async def register_user(username: str, password:str,email: str, session: AsyncSession = Depends(get_async_session)):
-    if (await session.execute(select(UserModel).filter(UserModel.username == username))).scalars().first():
+async def register_user(user: UserCreate, session: AsyncSession = Depends(get_async_session)):
+    if (await session.execute(select(UserModel).filter(UserModel.username == user.username))).scalars().first():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already taken")
-    if (await session.execute(select(UserModel).filter(UserModel.email == email))).scalars().first():
+    if (await session.execute(select(UserModel).filter(UserModel.email == user.email))).scalars().first():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email alreadt taken")
-    
-    hashed_password = hash_password(password)
-    db_user = UserModel(username=username, email=email, hashed_password=hashed_password)
+    hashed_password = hash_password(user.password)
+    db_user = UserModel(username=user.username, email=user.email, hashed_password=hashed_password, role=Role.USER)
     session.add(db_user)
     await session.commit()
     await session.refresh(db_user)
@@ -36,7 +36,7 @@ async def login_user(response: Response, form_data: OAuth2PasswordRequestForm = 
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token = create_access_token(data={"sub": user.username})
+    access_token = create_access_token(data={"sub": user.username, "role": user.role.value})
     response.set_cookie(
         key=settings.cookie_name,
         value=access_token,

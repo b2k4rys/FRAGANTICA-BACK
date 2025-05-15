@@ -6,7 +6,8 @@ from .crud import add_new_fragrance, add_new_company, get_all_fragrances, change
 from backend.core.db.session import get_async_session
 from backend.core.db.models.fragrance import FragranceType
 from backend.core.db.models.user import User as UserModel
-from ..auth.services import get_current_user
+from backend.core.db.models.user import Role
+from ..auth.services import get_current_user, require_role
 from ..fragrance import crud
 router = APIRouter(prefix="/fragrance", tags=['Fragrance routes'])
 
@@ -26,12 +27,12 @@ async def get_all_company(session: AsyncSession  = Depends(get_async_session)):
 
 # -- POST -- 
 @router.post("/new-fragrance")
-async def add_fragrance(fragrance_data: FragranceRequestSchema, session: AsyncSession = Depends(get_async_session), current_user: UserModel = Depends(get_current_user)):
+async def add_fragrance(fragrance_data: FragranceRequestSchema, session: AsyncSession = Depends(get_async_session), current_user: UserModel = Depends(require_role(Role.ADMIN))):
     return await add_new_fragrance(session, fragrance_data, current_user)
 
 
 @router.post("/new-company")
-async def add_company( request: Request,company_data: CompanySchema, session: AsyncSession = Depends(get_async_session), current_user: UserModel = Depends(get_current_user)):
+async def add_company( request: Request,company_data: CompanySchema, session: AsyncSession = Depends(get_async_session), current_user: UserModel = Depends(require_role(Role.ADMIN))):
     return await add_new_company(session, company_data, current_user)
 
 

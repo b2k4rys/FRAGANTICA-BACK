@@ -7,6 +7,7 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from backend.core.db.models.user import User as UserModel
+from backend.core.db.models.user import Role
 from backend.core.configs.config import settings
 from backend.core.db.session import get_async_session
 
@@ -68,3 +69,16 @@ async def get_current_user(request: Request, token: str = Depends(oauth2_scheme)
         raise credentials_exception
     return user
 
+
+
+def require_role(required_role: Role):
+    async def role_checker(
+        current_user: UserModel = Depends(get_current_user)
+    ) -> UserModel:
+        if current_user.role != required_role:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Role {required_role.value} required"
+            )
+        return current_user
+    return role_checker

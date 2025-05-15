@@ -1,12 +1,12 @@
 # src/schemas/user.py
 from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional, List
-
-
+from backend.core.db.models.user import Role
 
 class UserBase(BaseModel):
     username: str
     email: EmailStr
+    role: Role = Role.USER
 
 class UserCreate(UserBase):
     password: str
