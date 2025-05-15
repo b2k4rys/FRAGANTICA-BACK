@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from .schemas import FragranceSchema, CompanySchema, FragranceUpdate, FragranceRequestSchema, AccordRequestSchema, AccordGroupRequestSchema, AccordUpdateSchema
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
@@ -6,7 +6,7 @@ from .crud import add_new_fragrance, add_new_company, get_all_fragrances, change
 from backend.core.db.session import get_async_session
 from backend.core.db.models.fragrance import FragranceType
 from backend.core.db.models.user import User as UserModel
-from ..auth.cruds import get_current_user
+from ..auth.services import get_current_user
 from ..fragrance import crud
 router = APIRouter(prefix="/fragrance", tags=['Fragrance routes'])
 
@@ -31,7 +31,7 @@ async def add_fragrance(fragrance_data: FragranceRequestSchema, session: AsyncSe
 
 
 @router.post("/new-company")
-async def add_company(company_data: CompanySchema, session: AsyncSession = Depends(get_async_session), current_user: UserModel = Depends(get_current_user)):
+async def add_company( request: Request,company_data: CompanySchema, session: AsyncSession = Depends(get_async_session), current_user: UserModel = Depends(get_current_user)):
     return await add_new_company(session, company_data, current_user)
 
 

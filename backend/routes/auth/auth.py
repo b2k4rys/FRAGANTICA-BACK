@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -6,7 +6,7 @@ from ..auth.schemas import User, UserCreate, Token
 from backend.core.db.models.user import User as UserModel
 from backend.core.configs.config import settings
 from backend.core.db.session import get_async_session
-from ..auth.cruds import hash_password, create_access_token, authenticate_user
+from .services import hash_password, create_access_token, authenticate_user
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
@@ -27,7 +27,7 @@ async def register_user(username: str, password:str,email: str, session: AsyncSe
 
 
 @router.post("/login")
-async def login_user(form_data: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_async_session)):
+async def login_user(response: Response, form_data: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_async_session)):
     user = await authenticate_user(username=form_data.username, password=form_data.password, session=session)
     
     if not user:
@@ -37,7 +37,24 @@ async def login_user(form_data: OAuth2PasswordRequestForm = Depends(), session: 
             headers={"WWW-Authenticate": "Bearer"},
         )
     access_token = create_access_token(data={"sub": user.username})
+    response.set_cookie(
+        key=settings.cookie_name,
+        value=access_token,
+        httponly=settings.cookie_httponly,
+        secure=settings.cookie_secure,
+        samesite=settings.cookie_samesite,
+        max_age=settings.jwt_access_token_expire_minutes * 60  
+    )
     return {"access_token": access_token, "token_type": "bearer"}
 
+@router.post("/logout")
+async def logout(response: Response):
 
+    response.delete_cookie(
+        key=settings.cookie_name,
+        httponly=settings.cookie_httponly,
+        secure=settings.cookie_secure,
+        samesite=settings.cookie_samesite
+    )
+    return {"message": "Logged out successfully"}
     

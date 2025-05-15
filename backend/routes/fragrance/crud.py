@@ -4,8 +4,8 @@ from backend.core.db.models.user import User as UserModel
 from .schemas import CompanySchema, FragranceUpdate, FragranceRequestSchema, AccordRequestSchema, AccordGroupRequestSchema, AccordUpdateSchema
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
-from fastapi import HTTPException, Response
-from ..auth.cruds import get_current_user
+from fastapi import HTTPException, Response, Request
+from ..auth.services import get_current_user
 
 async def add_new_fragrance(session: AsyncSession, fragrance_data: FragranceRequestSchema, current_user: UserModel):
     new_fragrance = Fragrance(**fragrance_data.model_dump())
