@@ -1,18 +1,21 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.core.db.models.fragrance import Fragrance, Company, FragranceType, Accord, AccordGroup
+from backend.core.db.models.user import User as UserModel
 from .schemas import CompanySchema, FragranceUpdate, FragranceRequestSchema, AccordRequestSchema, AccordGroupRequestSchema, AccordUpdateSchema
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from fastapi import HTTPException, Response
+from ..auth.cruds import get_current_user
 
-async def add_new_fragrance(session: AsyncSession, fragrance_data: FragranceRequestSchema):
+async def add_new_fragrance(session: AsyncSession, fragrance_data: FragranceRequestSchema, current_user: UserModel):
     new_fragrance = Fragrance(**fragrance_data.model_dump())
     session.add(new_fragrance)
     await session.commit()
     await session.refresh(new_fragrance)
     return new_fragrance
 
-async def add_new_company(session: AsyncSession, company_data: CompanySchema):
+async def add_new_company(session: AsyncSession, company_data: CompanySchema, current_user: UserModel):
+
     new_company = Company(**company_data.model_dump())
     session.add(new_company)
     await session.commit()

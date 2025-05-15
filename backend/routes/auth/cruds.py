@@ -43,15 +43,13 @@ async def authenticate_user(username: str, password: str, session: AsyncSession)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
 
-async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserModel:
+async def get_current_user(token: str = Depends(oauth2_scheme), session: AsyncSession = Depends(get_async_session)) -> UserModel:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
-    ),
-    session: AsyncSession = Depends(get_async_session)
+    )
     try:
-
         payload  = jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
         username: str = payload.get("sub")
         if username is None:

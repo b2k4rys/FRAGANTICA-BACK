@@ -5,6 +5,8 @@ from typing import List
 from .crud import add_new_fragrance, add_new_company, get_all_fragrances, change_fragrance, get_fragrance_by_id, delete_fragrance_by_id, get_all_companies
 from backend.core.db.session import get_async_session
 from backend.core.db.models.fragrance import FragranceType
+from backend.core.db.models.user import User as UserModel
+from ..auth.cruds import get_current_user
 from ..fragrance import crud
 router = APIRouter(prefix="/fragrance", tags=['Fragrance routes'])
 
@@ -24,13 +26,13 @@ async def get_all_company(session: AsyncSession  = Depends(get_async_session)):
 
 # -- POST -- 
 @router.post("/new-fragrance")
-async def add_fragrance(fragrance_data: FragranceRequestSchema, session: AsyncSession = Depends(get_async_session)):
-    return await add_new_fragrance(session, fragrance_data)
+async def add_fragrance(fragrance_data: FragranceRequestSchema, session: AsyncSession = Depends(get_async_session), current_user: UserModel = Depends(get_current_user)):
+    return await add_new_fragrance(session, fragrance_data, current_user)
 
 
 @router.post("/new-company")
-async def add_company(company_data: CompanySchema, session: AsyncSession = Depends(get_async_session)):
-    return await add_new_company(session, company_data)
+async def add_company(company_data: CompanySchema, session: AsyncSession = Depends(get_async_session), current_user: UserModel = Depends(get_current_user)):
+    return await add_new_company(session, company_data, current_user)
 
 
 # -- PATCH -- 
