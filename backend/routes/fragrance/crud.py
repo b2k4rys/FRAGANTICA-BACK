@@ -14,7 +14,7 @@ async def add_new_fragrance(session: AsyncSession, fragrance_data: FragranceRequ
     await session.refresh(new_fragrance)
     return new_fragrance
 
-async def add_new_company(session: AsyncSession, company_data: CompanySchema, current_user: UserModel):
+async def add_new_company(session: AsyncSession, company_data: CompanySchema):
 
     new_company = Company(**company_data.model_dump())
     session.add(new_company)

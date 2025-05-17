@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import List, Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import HTTPException, status, Depends, Request
@@ -70,15 +70,25 @@ async def get_current_user(request: Request, token: str = Depends(oauth2_scheme)
     return user
 
 
+import logging
 
-def require_role(required_role: Role):
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+
+
+def require_role(required_roles: List[Role]):
     async def role_checker(
         current_user: UserModel = Depends(get_current_user)
     ) -> UserModel:
-        if current_user.role != required_role:
+        
+
+        if current_user.role not in required_roles:
+            allowed_roles = ", ".join(role.value for role in required_roles)
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Role {required_role.value} required"
-            )
+                            status_code=status.HTTP_403_FORBIDDEN,
+                            detail=f"Role must be one of: {allowed_roles}"
+                        )
         return current_user
     return role_checker
