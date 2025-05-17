@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi_csrf_protect import CsrfProtect
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from ..auth.schemas import User, UserCreate, Token
@@ -13,7 +14,14 @@ router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
 
 @router.post("/register", response_model=User)
-async def register_user(user: UserCreate, session: AsyncSession = Depends(get_async_session)):
+async def register_user(
+    user: UserCreate,
+    request: Request, 
+    session: AsyncSession = Depends(get_async_session), 
+    csrf_protect: CsrfProtect = Depends()
+):
+    if request.cookies.get(settings.cookie_name):
+        await csrf_protect.validate_csrf(request)
     if (await session.execute(select(UserModel).filter(UserModel.username == user.username))).scalars().first():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already taken")
     if (await session.execute(select(UserModel).filter(UserModel.email == user.email))).scalars().first():
@@ -27,7 +35,8 @@ async def register_user(user: UserCreate, session: AsyncSession = Depends(get_as
 
 
 @router.post("/login")
-async def login_user(response: Response, form_data: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_async_session)):
+async def login_user(request: Request,response: Response, form_data: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_async_session), csrf_protect: CsrfProtect = Depends()):
+
     user = await authenticate_user(username=form_data.username, password=form_data.password, session=session)
     
     if not user:
@@ -58,3 +67,16 @@ async def logout(response: Response):
     )
     return {"message": "Logged out successfully"}
     
+
+@router.get("/csrf-token")
+async def get_csrf_token(response: Response, csrf_protect: CsrfProtect = Depends()):
+    csrf_token, signed_token = csrf_protect.generate_csrf_tokens()
+    response.set_cookie(
+        key="csrf_token",
+        value=csrf_token,
+        httponly=False,  
+        samesite=settings.cookie_samesite,
+        secure=settings.cookie_secure
+    )
+    csrf_protect.set_csrf_cookie(signed_token, response)
+    return {"csrf_token": csrf_token}
