@@ -3,7 +3,6 @@ from sqlalchemy import BigInteger, String, Text, Enum
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from typing import List
 import enum
-
 from sqlalchemy import Enum as SqlEnum
 
 metadata = Base.metadata
@@ -22,4 +21,6 @@ class User(Base):
     role: Mapped[Role] = mapped_column(Enum(Role), default=Role.USER, nullable=False)
  
     hashed_password: Mapped[str] = mapped_column(Text, nullable=True)
+
+    reviews: Mapped[List["Review"]] = relationship(back_populates="user")
     

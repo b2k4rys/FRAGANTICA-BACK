@@ -1,6 +1,6 @@
 from backend.core.db.session import Base
-from sqlalchemy import BigInteger, String, Text, ForeignKey, Integer, Table, Column
-from sqlalchemy.orm import mapped_column, Mapped, relationship
+from sqlalchemy import BigInteger, String, Text, ForeignKey, Integer, Table, Column, Float
+from sqlalchemy.orm import mapped_column, Mapped, relationship, validates
 from typing import List
 from enum import Enum
 from sqlalchemy import Enum as SqlEnum
@@ -69,3 +69,29 @@ class AccordGroup(Base):
     accords: Mapped[List["Accord"]] = relationship(back_populates="accord_group")
 
     
+
+
+class Review(Base):
+    __tablename__ = "reviews"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"), index=True)
+    content: Mapped[str] = mapped_column(Text)
+    rating: Mapped[float] = mapped_column(Float)
+
+    user: Mapped["User"] = relationship(back_populates="reviews")
+    @validates("rating")
+    def validate_rating(self, key, rating):
+        if not (1 <= rating <= 10):
+            raise ValueError("Rating must be between 1 and 10")
+        if (rating * 2) % 1 != 0:  
+            raise ValueError("Rating must be a multiple of 0.5 (e.g., 1.0, 1.5, 2.0)")
+        return rating
+    
+    @validates("content")
+    def validate_content(self, key, content):
+        if not content or len(content.strip()) == 0:
+            raise ValueError("Review content cannot be empty")
+        if len(content) > 2000:
+            raise ValueError("Review content must not exceed 2000 characters")
+        return content.strip()
