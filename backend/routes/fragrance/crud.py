@@ -1,11 +1,14 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from backend.core.db.models.fragrance import Fragrance, Company, FragranceType, Accord, AccordGroup
+from backend.core.db.models.fragrance import Fragrance, Company, FragranceType, Accord, AccordGroup, Review
 from backend.core.db.models.user import User as UserModel
-from .schemas import CompanySchema, FragranceUpdate, FragranceRequestSchema, AccordRequestSchema, AccordGroupRequestSchema, AccordUpdateSchema
+from backend.core.configs.config import settings
+from .schemas import CompanySchema, FragranceUpdate, FragranceRequestSchema, AccordRequestSchema, AccordGroupRequestSchema, AccordUpdateSchema, ReviewCreateSchema
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
-from fastapi import HTTPException, Response, Request
+from fastapi import HTTPException, Response, Request, status
 from ..auth.services import get_current_user
+from pydantic import ValidationError
+from fastapi_csrf_protect import CsrfProtect
 
 async def add_new_fragrance(session: AsyncSession, fragrance_data: FragranceRequestSchema, current_user: UserModel):
     new_fragrance = Fragrance(**fragrance_data.model_dump())
@@ -146,3 +149,22 @@ async def add_accord_group(accord_group: AccordGroupRequestSchema, session: Asyn
     await session.refresh(new_accord_group)
     return new_accord_group
 
+
+# REVIEW
+async def add_review(review: ReviewCreateSchema, request: Request, current_user: UserModel, session: AsyncSession, csrf_protector: CsrfProtect):
+    if request.cookies.get(settings.cookie_name):
+        csrf_protector.validate_csrf(request)
+    
+    try:
+        db_review = Review(user_id=current_user.id, fragrance_id=review.fragrance_id, content=review.content, rating=review.rating)
+        session.add(db_review)
+        await session.commit()
+        await session.refresh(db_review)
+        return db_review
+    except ValidationError as e:
+        await session.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+
+    

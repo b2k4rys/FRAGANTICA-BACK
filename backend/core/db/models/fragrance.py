@@ -33,6 +33,7 @@ class Fragrance(Base):
     fragrance_type: Mapped[FragranceType] = mapped_column(SqlEnum(FragranceType))
     ml: Mapped[int] = mapped_column(Integer,nullable=True)
     picture: Mapped[str] = mapped_column(String, nullable=True)
+    fragrance_reviews: Mapped[List["Review"]] = relationship(back_populates="fragrance")
 
     accords: Mapped[List["Accord"]] = relationship(back_populates="fragrances", secondary=fragrance_accords_relationship)
 
@@ -76,10 +77,12 @@ class Review(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"), index=True)
+    fragrance_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("fragrance.id"), index=True)
     content: Mapped[str] = mapped_column(Text)
     rating: Mapped[float] = mapped_column(Float)
 
     user: Mapped["User"] = relationship(back_populates="reviews")
+    fragrance: Mapped["Fragrance"] = relationship(back_populates="fragrance_reviews")
     @validates("rating")
     def validate_rating(self, key, rating):
         if not (1 <= rating <= 10):

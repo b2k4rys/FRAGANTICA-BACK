@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Request
-from .schemas import FragranceSchema, CompanySchema, FragranceUpdate, FragranceRequestSchema, AccordRequestSchema, AccordGroupRequestSchema, AccordUpdateSchema
+from .schemas import FragranceSchema, CompanySchema, FragranceUpdate, FragranceRequestSchema, AccordRequestSchema, AccordGroupRequestSchema, AccordUpdateSchema, ReviewCreateSchema
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from .crud import add_new_fragrance, add_new_company, get_all_fragrances, change_fragrance, get_fragrance_by_id, delete_fragrance_by_id, get_all_companies
@@ -9,6 +9,7 @@ from backend.core.db.models.user import User as UserModel
 from backend.core.db.models.user import Role
 from ..auth.services import get_current_user, require_role
 from ..fragrance import crud
+from fastapi_csrf_protect import CsrfProtect
 router = APIRouter(prefix="/fragrance", tags=['Fragrance routes'])
 
 
@@ -64,3 +65,8 @@ async def update_accord(accord_id: int, accord_update: AccordUpdateSchema, sessi
 @router.post("/accords/group")
 async def add_accord_group(accord_group: AccordGroupRequestSchema, session: AsyncSession = Depends(get_async_session)):
     return await crud.add_accord_group(accord_group, session)
+
+
+@router.post("/reviews")
+async def add_reviwew(review: ReviewCreateSchema, request: Request, current_user: UserModel = Depends(require_role([Role.ADMIN, Role.USER])), session: AsyncSession = Depends(get_async_session), csrf_protector: CsrfProtect = Depends() ):
+    return await crud.add_review(review, request, current_user, session, csrf_protector)

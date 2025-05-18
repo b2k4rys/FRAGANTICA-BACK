@@ -62,3 +62,9 @@ class AccordGroupRequestSchema(BaseModel):
     name: str
     description: str
 
+
+
+class ReviewCreateSchema(BaseModel):
+    content: str
+    fragrance_id: int
+    rating: float
