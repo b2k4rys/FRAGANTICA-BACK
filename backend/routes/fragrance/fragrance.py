@@ -74,3 +74,8 @@ async def add_review(review: ReviewCreateSchema, request: Request, current_user:
 @router.patch("/reviews/{review_id}")
 async def edit_review(review_id: int, review_update: ReviewUpdateSchema, request: Request, current_user: UserModel = Depends(require_role([Role.ADMIN, Role.USER])), session: AsyncSession = Depends(get_async_session), csrf_protector: CsrfProtect = Depends()):
     return await crud.edit_review(review_id, review_update, request, current_user, session, csrf_protector)
+
+
+@router.delete("/reviews/{review_id}")
+async def delete_review(review_id: int, request: Request, current_user: UserModel = Depends(require_role([Role.ADMIN, Role.USER])), session: AsyncSession = Depends(get_async_session), csrf_protector: CsrfProtect = Depends()):
+    return await crud.delete_review(review_id ,request, current_user, session, csrf_protector)

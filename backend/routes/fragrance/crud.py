@@ -198,3 +198,4 @@ async def edit_review(review_id: int, review_update: ReviewUpdateSchema, request
     await session.commit()
     await session.refresh(review)
     return review
+
