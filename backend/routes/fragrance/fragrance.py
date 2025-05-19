@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Request
-from .schemas import FragranceSchema, CompanySchema, FragranceUpdate, FragranceRequestSchema, AccordRequestSchema, AccordGroupRequestSchema, AccordUpdateSchema, ReviewCreateSchema
+from .schemas import FragranceSchema, CompanySchema, FragranceUpdate, FragranceRequestSchema, AccordRequestSchema, AccordGroupRequestSchema, AccordUpdateSchema, ReviewCreateSchema, ReviewUpdateSchema
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from .crud import add_new_fragrance, add_new_company, get_all_fragrances, change_fragrance, get_fragrance_by_id, delete_fragrance_by_id, get_all_companies
@@ -68,5 +68,9 @@ async def add_accord_group(accord_group: AccordGroupRequestSchema, session: Asyn
 
 
 @router.post("/reviews")
-async def add_reviwew(review: ReviewCreateSchema, request: Request, current_user: UserModel = Depends(require_role([Role.ADMIN, Role.USER])), session: AsyncSession = Depends(get_async_session), csrf_protector: CsrfProtect = Depends() ):
+async def add_review(review: ReviewCreateSchema, request: Request, current_user: UserModel = Depends(require_role([Role.ADMIN, Role.USER])), session: AsyncSession = Depends(get_async_session), csrf_protector: CsrfProtect = Depends() ):
     return await crud.add_review(review, request, current_user, session, csrf_protector)
+
+@router.patch("/reviews/{review_id}")
+async def edit_review(review_id: int, review_update: ReviewUpdateSchema, request: Request, current_user: UserModel = Depends(require_role([Role.ADMIN, Role.USER])), session: AsyncSession = Depends(get_async_session), csrf_protector: CsrfProtect = Depends()):
+    return await crud.edit_review(review_id, review_update, request, current_user, session, csrf_protector)

@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.core.db.models.fragrance import Fragrance, Company, FragranceType, Accord, AccordGroup, Review
 from backend.core.db.models.user import User as UserModel
 from backend.core.configs.config import settings
-from .schemas import CompanySchema, FragranceUpdate, FragranceRequestSchema, AccordRequestSchema, AccordGroupRequestSchema, AccordUpdateSchema, ReviewCreateSchema
+from .schemas import CompanySchema, FragranceUpdate, FragranceRequestSchema, AccordRequestSchema, AccordGroupRequestSchema, AccordUpdateSchema, ReviewCreateSchema, ReviewUpdateSchema
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from fastapi import HTTPException, Response, Request, status
@@ -166,5 +166,35 @@ async def add_review(review: ReviewCreateSchema, request: Request, current_user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-
+async def delete_review(review_id: int, request: Request, current_user: UserModel, session: AsyncSession, csrf_protector: CsrfProtect):
+    if request.cookies.get(settings.cookie_name):
+        csrf_protector.validate_csrf(request)
+    stmt = select(Review).filter_by(id = review_id, user_id=current_user.id)
+    result = await session.execute(stmt)
+    review = result.scalar_one_or_none()
+    if review is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+    try:
+        await session.delete(review)
+        await session.commit()
+    except Exception as e:
+        await session.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
     
+
+async def edit_review(review_id: int, review_update: ReviewUpdateSchema, request: Request, current_user: UserModel, session: AsyncSession, csrf_protector: CsrfProtect):
+    if request.cookies.get(settings.cookie_name):
+        csrf_protector.validate_csrf(request)
+    stmt = select(Review).filter_by(id = review_id, user_id=current_user.id)
+    result = await session.execute(stmt)
+    review = result.scalar_one_or_none()
+    if review is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+    
+    update_data = review_update.model_dump(exclude_unset=True)
+   
+    for key, value in update_data.items():
+        setattr(review, key, value)
+    await session.commit()
+    await session.refresh(review)
+    return review

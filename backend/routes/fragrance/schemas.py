@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import List
 from backend.core.db.models.fragrance import FragranceType
 class FragranceSchema(BaseModel):
@@ -68,3 +68,15 @@ class ReviewCreateSchema(BaseModel):
     content: str
     fragrance_id: int
     rating: float
+
+class ReviewUpdateSchema(BaseModel):
+    content: str | None = None
+    rating: float | None = None
+
+    @field_validator("rating")
+    def valid_rating(cls, value: float) -> float:
+        if not (1 <= value <= 10):
+            raise ValueError("Rating must be between 1 and 10")
+        if (value * 2) % 1 != 0:  
+            raise ValueError("Rating must be a multiple of 0.5 (e.g., 1.0, 1.5, 2.0)")
+        return value
