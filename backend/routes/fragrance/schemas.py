@@ -14,6 +14,10 @@ class FragranceSchema(BaseModel):
     class Config:
         from_attributes = True
 
+class FragranceShemaById(FragranceSchema):
+    reviews: List["ReviewResponseSchema"] | None = None
+
+
 class FragranceRequestSchema(BaseModel):
     name: str = Field(min_length=3, max_length=150)
     company_id: int
@@ -63,6 +67,10 @@ class AccordGroupRequestSchema(BaseModel):
     description: str
 
 
+class ReviewResponseSchema(BaseModel):
+    user_id: int
+    content: int
+    rating: float
 
 class ReviewCreateSchema(BaseModel):
     content: str

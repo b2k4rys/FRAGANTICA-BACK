@@ -48,8 +48,10 @@ async def edit_fragrance(fragrance_id: int, updated_fragrance_data: FragranceUpd
 async def delete_fragrance(fragrance_id: int,session: AsyncSession = Depends(get_async_session), current_user: UserModel = Depends(require_role([Role.ADMIN]))):
     return await delete_fragrance_by_id(fragrance_id, session)
 
-# ACCORDS 
 
+
+
+#                       ==== ACCCORDS ==== 
 @router.get("/accords")
 async def get_accords(session: AsyncSession = Depends(get_async_session)):
     return await crud.get_accords(session)
@@ -63,10 +65,13 @@ async def update_accord(accord_id: int, accord_update: AccordUpdateSchema, sessi
     return await crud.change_accord(accord_id, accord_update, session)
 
 @router.post("/accords/group")
-async def add_accord_group(accord_group: AccordGroupRequestSchema, session: AsyncSession = Depends(get_async_session)):
+async def add_accord_group(accord_group: AccordGroupRequestSchema, session: AsyncSession = Depends(get_async_session), current_user: UserModel = Depends(require_role([Role.ADMIN]))):
     return await crud.add_accord_group(accord_group, session)
 
 
+
+
+#                       ==== REVIEWS ==== 
 @router.post("/reviews")
 async def add_review(review: ReviewCreateSchema, request: Request, current_user: UserModel = Depends(require_role([Role.ADMIN, Role.USER])), session: AsyncSession = Depends(get_async_session), csrf_protector: CsrfProtect = Depends() ):
     return await crud.add_review(review, request, current_user, session, csrf_protector)
@@ -74,7 +79,6 @@ async def add_review(review: ReviewCreateSchema, request: Request, current_user:
 @router.patch("/reviews/{review_id}")
 async def edit_review(review_id: int, review_update: ReviewUpdateSchema, request: Request, current_user: UserModel = Depends(require_role([Role.ADMIN, Role.USER])), session: AsyncSession = Depends(get_async_session), csrf_protector: CsrfProtect = Depends()):
     return await crud.edit_review(review_id, review_update, request, current_user, session, csrf_protector)
-
 
 @router.delete("/reviews/{review_id}")
 async def delete_review(review_id: int, request: Request, current_user: UserModel = Depends(require_role([Role.ADMIN, Role.USER])), session: AsyncSession = Depends(get_async_session), csrf_protector: CsrfProtect = Depends()):

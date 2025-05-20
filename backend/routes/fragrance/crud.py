@@ -87,9 +87,9 @@ async def change_fragrance(
 
 
 async def get_fragrance_by_id(fragrance_id: int, session: AsyncSession):
-    stmt = select(Fragrance).filter_by(id=fragrance_id)
+    stmt = select(Fragrance).options(selectinload(Fragrance.fragrance_reviews)).filter_by(id=fragrance_id)
     result = await session.execute(stmt)
-    fragrance = result.scalar_one()
+    fragrance = result.scalar_one_or_none()
     if fragrance is None:
         raise HTTPException(status_code=404, detail="Item not found")
     return fragrance
