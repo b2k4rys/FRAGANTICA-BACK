@@ -1,5 +1,5 @@
 from backend.core.db.session import Base
-from sqlalchemy import BigInteger, String, Text, ForeignKey, Integer, Table, Column, Float
+from sqlalchemy import BigInteger, String, Text, ForeignKey, Integer, Table, Column, Float, UniqueConstraint
 from sqlalchemy.orm import mapped_column, Mapped, relationship, validates
 from typing import List
 from enum import Enum
@@ -12,6 +12,11 @@ class FragranceType(Enum):
     elixir = "Elixir"
     par = "Parfum"
     edt = "Eau de Toilette"
+
+class WishListType(Enum):
+    OWNED = "owned"
+    WANTED = "wanted"
+    USED = "used"
 
 
 fragrance_accords_relationship = Table(
@@ -36,6 +41,7 @@ class Fragrance(Base):
     fragrance_reviews: Mapped[List["Review"]] = relationship(back_populates="fragrance")
 
     accords: Mapped[List["Accord"]] = relationship(back_populates="fragrances", secondary=fragrance_accords_relationship)
+    users: Mapped[List["Wishlist"]] = relationship(back_populates="fragrance")
 
 
 class Company(Base):
@@ -98,3 +104,19 @@ class Review(Base):
         if len(content) > 2000:
             raise ValueError("Review content must not exceed 2000 characters")
         return content.strip()
+
+
+class Wishlist(Base):
+    __tablename__ = "user_fragrance"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"), index=True)
+    fragrance_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("fragrance.id"), index=True)
+    status: Mapped[WishListType] = mapped_column(SqlEnum(WishListType), nullable=False, default=WishListType.WANTED)
+    __table_args__ = (
+            UniqueConstraint("user_id", "fragrance_id", name="unique_user_fragrance"),
+    )
+
+
+    user: Mapped["User"] = relationship(back_populates="wishlist")
+    fragrance: Mapped["Fragrance"] = relationship(back_populates="users")

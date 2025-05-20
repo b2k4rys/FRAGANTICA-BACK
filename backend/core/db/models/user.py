@@ -12,6 +12,8 @@ class Role(enum.Enum):
     ADMIN = "admin"
     USER = "user"
     
+
+
 class User(Base):
 
     __tablename__ = "users"
@@ -23,4 +25,4 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(Text, nullable=True)
 
     reviews: Mapped[List["Review"]] = relationship(back_populates="user")
-    
+    wishlist: Mapped[List["Wishlist"]] = relationship(back_populates="user")
