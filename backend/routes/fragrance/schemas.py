@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, field_validator
 from typing import List
-from backend.core.db.models.fragrance import FragranceType
+from backend.core.db.models.fragrance import FragranceType, WishListType
 class FragranceSchema(BaseModel):
     id: int
     name: str = Field(min_length=3, max_length=150)
@@ -53,6 +53,7 @@ class AccordRequestSchema(BaseModel):
     name: str
     description: str
     group_id: int
+
 class AccordResponseSchema(BaseModel):
     name: str
     description: str
@@ -88,3 +89,7 @@ class ReviewUpdateSchema(BaseModel):
         if (value * 2) % 1 != 0:  
             raise ValueError("Rating must be a multiple of 0.5 (e.g., 1.0, 1.5, 2.0)")
         return value
+    
+class WishlistRequestSchema(BaseModel):
+    fragrance_id: int
+    status: WishListType

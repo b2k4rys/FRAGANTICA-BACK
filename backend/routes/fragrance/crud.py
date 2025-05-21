@@ -1,8 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from backend.core.db.models.fragrance import Fragrance, Company, FragranceType, Accord, AccordGroup, Review
+from backend.core.db.models.fragrance import Fragrance, Company, FragranceType, Accord, AccordGroup, Review, Wishlist
 from backend.core.db.models.user import User as UserModel
 from backend.core.configs.config import settings
-from .schemas import CompanySchema, FragranceUpdate, FragranceRequestSchema, AccordRequestSchema, AccordGroupRequestSchema, AccordUpdateSchema, ReviewCreateSchema, ReviewUpdateSchema
+from .schemas import CompanySchema, FragranceUpdate, FragranceRequestSchema, AccordRequestSchema, AccordGroupRequestSchema, AccordUpdateSchema, ReviewCreateSchema, ReviewUpdateSchema, WishlistRequestSchema
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from fastapi import HTTPException, Response, Request, status
@@ -150,7 +150,7 @@ async def add_accord_group(accord_group: AccordGroupRequestSchema, session: Asyn
     return new_accord_group
 
 
-# REVIEW
+#                       ==== REVIEWS ==== 
 async def add_review(review: ReviewCreateSchema, request: Request, current_user: UserModel, session: AsyncSession, csrf_protector: CsrfProtect):
     if request.cookies.get(settings.cookie_name):
         csrf_protector.validate_csrf(request)
@@ -199,3 +199,25 @@ async def edit_review(review_id: int, review_update: ReviewUpdateSchema, request
     await session.refresh(review)
     return review
 
+
+
+#                       ==== WISHLIST ==== 
+
+async def add_to_wishlist(wishlist: WishlistRequestSchema, request: Request, session: AsyncSession, current_user: UserModel, csrf_protector: CsrfProtect):
+    if request.cookies.get(settings.cookie_name):
+        csrf_protector.validate_csrf(request)
+    stmt = select(Wishlist).filter_by(user_id=current_user.id, fragrance_id=wishlist.fragrance_id)
+    existing = await session.execute(stmt)
+    existing = existing.scalar_one_or_none()
+
+    if existing:
+        existing.status = wishlist.status
+        await session.commit()
+        await session.refresh(existing)
+        return existing
+
+    wishlist_db = Wishlist(user_id=current_user.id, fragrance_id = wishlist.fragrance_id, status=wishlist.status)
+    session.add(wishlist_db)
+    await session.commit()
+    await session.refresh(wishlist_db)
+    return wishlist_db
