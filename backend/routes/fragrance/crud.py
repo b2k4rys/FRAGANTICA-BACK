@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from backend.core.db.models.fragrance import Fragrance, Company, FragranceType, Accord, AccordGroup, Review, Wishlist
+from backend.core.db.models.fragrance import Fragrance, Company, FragranceType, Note, NoteGroup, Review, Wishlist
 from backend.core.db.models.user import User as UserModel
 from backend.core.configs.config import settings
 from .schemas import CompanySchema, FragranceUpdate, FragranceRequestSchema, AccordRequestSchema, AccordGroupRequestSchema, AccordUpdateSchema, ReviewCreateSchema, ReviewUpdateSchema, WishlistRequestSchema
@@ -202,8 +202,7 @@ async def edit_review(review_id: int, review_update: ReviewUpdateSchema, request
 
 
 #                       ==== WISHLIST ==== 
-
-async def add_to_wishlist(wishlist: WishlistRequestSchema, request: Request, session: AsyncSession, current_user: UserModel, csrf_protector: CsrfProtect):
+async def add_to_or_edit_wishlist(wishlist: WishlistRequestSchema, request: Request, session: AsyncSession, current_user: UserModel, csrf_protector: CsrfProtect):
     if request.cookies.get(settings.cookie_name):
         csrf_protector.validate_csrf(request)
     stmt = select(Wishlist).filter_by(user_id=current_user.id, fragrance_id=wishlist.fragrance_id)
@@ -221,3 +220,4 @@ async def add_to_wishlist(wishlist: WishlistRequestSchema, request: Request, ses
     await session.commit()
     await session.refresh(wishlist_db)
     return wishlist_db
+

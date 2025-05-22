@@ -18,13 +18,12 @@ class WishListType(Enum):
     WANTED = "wanted"
     USED = "used"
 
+class NoteType(Enum):
+    TOP = "top"
+    MIDDLE = "middle"
+    BASE = "base"
 
-fragrance_accords_relationship = Table(
-    "fragrance_accords_relationship",
-    Base.metadata,
-    Column("fragrance_id", ForeignKey("fragrance.id"), primary_key=True),
-    Column("accord_id", ForeignKey("accord.id"), primary_key=True)
-)
+
 
 class Fragrance(Base):
     __tablename__ = "fragrance"
@@ -40,8 +39,8 @@ class Fragrance(Base):
     picture: Mapped[str] = mapped_column(String, nullable=True)
     fragrance_reviews: Mapped[List["Review"]] = relationship(back_populates="fragrance")
 
-    accords: Mapped[List["Accord"]] = relationship(back_populates="fragrances", secondary=fragrance_accords_relationship)
     users: Mapped[List["Wishlist"]] = relationship(back_populates="fragrance")
+    notes: Mapped[List["FragranceNote"]] = relationship(back_populates="fragrance")
 
 
 class Company(Base):
@@ -54,30 +53,40 @@ class Company(Base):
     fragrances: Mapped[List[Fragrance]] = relationship(Fragrance, back_populates="company")
 
 
+class Note(Base):
+    __tablename__ = "note"
 
-class Accord(Base):
-    __tablename__ = "accord"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    name: Mapped[str] = mapped_column(String(150), unique=True)
+    description: Mapped[str] = mapped_column(Text)
+    group_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("note_group.id"), index = True)
+    category: Mapped["NoteGroup"] = relationship(back_populates="accords")
+
+    fragrances: Mapped[List["FragranceNote"]] = relationship(back_populates="note")
+
+
+
+    
+class NoteGroup(Base):
+    __tablename__ = "note_group"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     name: Mapped[str] = mapped_column(String(150))
     description: Mapped[str] = mapped_column(Text)
-    group_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("accord_groups.id"), index = True)
-    accord_group: Mapped["AccordGroup"] = relationship(back_populates="accords")
-
-    fragrances: Mapped[List["Fragrance"]] = relationship(back_populates="accords", secondary=fragrance_accords_relationship)
+    note: Mapped[List["Note"]] = relationship(back_populates="accord_group")
 
     
-class AccordGroup(Base):
-    __tablename__ = "accord_groups"
+class FragranceNote(Base):
+    __tablename__ = "fragrance_note"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    name: Mapped[str] = mapped_column(String(150))
-    description: Mapped[str] = mapped_column(Text)
-    accords: Mapped[List["Accord"]] = relationship(back_populates="accord_group")
+    fragrance_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("fragrance.id"), index=True)
+    note_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("note.id"), index=True)
+    note_type: Mapped[NoteType] = mapped_column(SqlEnum(NoteType))
 
+    fragrance: Mapped["Fragrance"] = relationship(back_populates="notes")
+    note: Mapped["Note"] = relationship(back_populates="notes")
     
-
-
 class Review(Base):
     __tablename__ = "reviews"
 

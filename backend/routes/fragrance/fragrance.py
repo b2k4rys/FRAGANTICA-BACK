@@ -81,5 +81,5 @@ async def delete_review(review_id: int, request: Request, current_user: UserMode
 
 
 @router.post("/wishlist")
-async def add_to_wishlist(wishlist: WishlistRequestSchema, request: Request, session: AsyncSession = Depends(get_async_session), current_user: UserModel = Depends(require_role([Role.USER, Role.ADMIN])), csrf_protector: CsrfProtect = Depends()):
-    return await crud.add_to_wishlist(wishlist, request, session, current_user, csrf_protector)
+async def add_to_or_edit_wishlist(wishlist: WishlistRequestSchema, request: Request, session: AsyncSession = Depends(get_async_session), current_user: UserModel = Depends(require_role([Role.USER, Role.ADMIN])), csrf_protector: CsrfProtect = Depends()):
+    return await crud.add_to_or_edit_wishlist(wishlist, request, session, current_user, csrf_protector)
