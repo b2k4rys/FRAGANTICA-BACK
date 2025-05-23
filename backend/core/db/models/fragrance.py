@@ -64,8 +64,6 @@ class Note(Base):
 
     fragrances: Mapped[List["FragranceNote"]] = relationship(back_populates="note")
 
-
-
     
 class NoteGroup(Base):
     __tablename__ = "note_group"
