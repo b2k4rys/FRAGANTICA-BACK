@@ -117,3 +117,5 @@ uvicorn backend.main:app --reload --port 8000
 
 * Regular users can manage their wishlist and reviews.
 
+<br>
+Last Updated: May 24, 2025
