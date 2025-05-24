@@ -60,7 +60,7 @@ class Note(Base):
     name: Mapped[str] = mapped_column(String(150), unique=True)
     description: Mapped[str] = mapped_column(Text)
     group_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("note_group.id"), index = True)
-    category: Mapped["NoteGroup"] = relationship(back_populates="accords")
+    category: Mapped["NoteGroup"] = relationship(back_populates="note")
 
     fragrances: Mapped[List["FragranceNote"]] = relationship(back_populates="note")
 
@@ -71,7 +71,7 @@ class NoteGroup(Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     name: Mapped[str] = mapped_column(String(150))
     description: Mapped[str] = mapped_column(Text)
-    note: Mapped[List["Note"]] = relationship(back_populates="accord_group")
+    note: Mapped[List["Note"]] = relationship(back_populates="category")
 
     
 class FragranceNote(Base):
@@ -83,7 +83,7 @@ class FragranceNote(Base):
     note_type: Mapped[NoteType] = mapped_column(SqlEnum(NoteType))
 
     fragrance: Mapped["Fragrance"] = relationship(back_populates="notes")
-    note: Mapped["Note"] = relationship(back_populates="notes")
+    note: Mapped["Note"] = relationship(back_populates="fragrances")
     
 class Review(Base):
     __tablename__ = "reviews"

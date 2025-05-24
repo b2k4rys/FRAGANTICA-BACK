@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.core.db.models.fragrance import Fragrance, Company, FragranceType, Note, NoteGroup, Review, Wishlist
 from backend.core.db.models.user import User as UserModel
 from backend.core.configs.config import settings
-from .schemas import CompanySchema, FragranceUpdate, FragranceRequestSchema, AccordRequestSchema, AccordGroupRequestSchema, AccordUpdateSchema, ReviewCreateSchema, ReviewUpdateSchema, WishlistRequestSchema
+from .schemas import CompanySchema, FragranceUpdate, FragranceRequestSchema, NoteRequestSchema, NoteGroupRequestSchema, NoteUpdateSchema, ReviewCreateSchema, ReviewUpdateSchema, WishlistRequestSchema
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from fastapi import HTTPException, Response, Request, status
@@ -33,7 +33,8 @@ async def get_all_fragrances(session: AsyncSession, company_name: str | None = N
     if fragrance_type:
         filters.append(Fragrance.fragrance_type == fragrance_type)
     
-    stmt = select(Fragrance).join(Company).filter(*filters).options(selectinload(Fragrance.company), selectinload(Fragrance.accords))
+    stmt = select(Fragrance).join(Company).filter(*filters).options(selectinload(Fragrance.company))
+ 
     result = await session.execute(stmt)
     fragrances = result.scalars().all()
     if not fragrances:
@@ -72,7 +73,7 @@ async def change_fragrance(
     if "accords" in update_data:
         accord_ids = update_data["accords"] or []
         if accord_ids:
-            result = await session.execute(select(Accord).where(Accord.id.in_(accord_ids)))
+            result = await session.execute(select(Note).where(Note.id.in_(accord_ids)))
             accords = result.scalars().all()
             if len(accords) != len(accord_ids):
                 raise HTTPException(status_code=400, detail="One or more accord_ids are invalid")
@@ -110,22 +111,22 @@ async def delete_fragrance_by_id(fragrance_id: int, session: AsyncSession):
 #  ACCORDS
 
 async def get_accords(session: AsyncSession):
-    stmt  = select(Accord)
+    stmt  = select(Note)
     result  = await session.execute(stmt)
     accords = result.scalars().all()
     if not accords:
         raise HTTPException(status_code=404, detail="Not found")
     return accords
 
-async def add_accord(accord: AccordRequestSchema, session: AsyncSession):
-    new_accord = Accord(**accord.model_dump())
+async def add_accord(note: NoteRequestSchema, session: AsyncSession):
+    new_accord = Note(**note.model_dump())
     session.add(new_accord)
     await session.commit()
     await session.refresh(new_accord)
     return new_accord
 
-async def change_accord(accord_id: int, accord_update: AccordUpdateSchema, session: AsyncSession):
-    result = await session.execute(select(Accord).filter_by(id=accord_id))
+async def change_accord(accord_id: int, accord_update: NoteUpdateSchema, session: AsyncSession):
+    result = await session.execute(select(Note).filter_by(id=accord_id))
     accord = result.scalar_one_or_none()
 
 
@@ -142,8 +143,8 @@ async def change_accord(accord_id: int, accord_update: AccordUpdateSchema, sessi
 
 
 
-async def add_accord_group(accord_group: AccordGroupRequestSchema, session: AsyncSession):
-    new_accord_group = AccordGroup(**accord_group.model_dump())
+async def add_accord_group(note_group: NoteGroupRequestSchema, session: AsyncSession):
+    new_accord_group = NoteGroup(**note_group.model_dump())
     session.add(new_accord_group)
     await session.commit()
     await session.refresh(new_accord_group)

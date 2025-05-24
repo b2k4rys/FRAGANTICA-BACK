@@ -10,7 +10,6 @@ class FragranceSchema(BaseModel):
     price: int 
     ml: int | None = None
     picture: str | None = None
-    accords: List["AccordResponseSchema"] | None = None
     class Config:
         from_attributes = True
 
@@ -34,7 +33,6 @@ class FragranceUpdate(BaseModel):
     price: int | None = None
     ml: int | None = None
     picture: str | None = None
-    accords: list[int] | None = None
     
 class CompanySchema(BaseModel):
     name: str = Field(min_length=3, max_length=150)
@@ -49,21 +47,21 @@ class ListFragranceResponseSchema(BaseModel):
         orm_mode = True
 
 
-class AccordRequestSchema(BaseModel):
+class NoteRequestSchema(BaseModel):
     name: str
     description: str
     group_id: int
 
-class AccordResponseSchema(BaseModel):
+class NoteResponseSchema(BaseModel):
     name: str
     description: str
     group_id: int
-class AccordUpdateSchema(BaseModel):
+class NoteUpdateSchema(BaseModel):
     name: str | None = None
     description: str | None = None
     group_id: int | None = None
 
-class AccordGroupRequestSchema(BaseModel):
+class NoteGroupRequestSchema(BaseModel):
     name: str
     description: str
 
