@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from backend.core.db.models.fragrance import Fragrance, Company, FragranceType, Note, NoteGroup, Review, Wishlist
+from backend.core.db.models.fragrance import Fragrance, Company, FragranceType, Note, NoteGroup, Review, Wishlist, FragranceNote
 from backend.core.db.models.user import User as UserModel
 from backend.core.configs.config import settings
 from .schemas import CompanySchema, FragranceUpdate, FragranceRequestSchema, NoteRequestSchema, NoteGroupRequestSchema, NoteUpdateSchema, ReviewCreateSchema, ReviewUpdateSchema, WishlistRequestSchema
@@ -9,14 +9,34 @@ from fastapi import HTTPException, Response, Request, status
 from ..auth.services import get_current_user
 from pydantic import ValidationError
 from fastapi_csrf_protect import CsrfProtect
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 async def add_new_fragrance(session: AsyncSession, fragrance_data: FragranceRequestSchema, current_user: UserModel):
     new_fragrance = Fragrance(name=fragrance_data.name, company_id=fragrance_data.company_id, description=fragrance_data.description, fragrance_type=fragrance_data.fragrance_type, price=fragrance_data.price)
-    if fragrance_data.notes:
-        pass
     session.add(new_fragrance)
     await session.commit()
     await session.refresh(new_fragrance)
+    if fragrance_data.notes:
+        for note in fragrance_data.notes:
+            for key, value in note.items():
+
+                    n = FragranceNote(fragrance_id=new_fragrance.id, note_id=value, note_type=key)
+                    session.add(n)
+                    await session.commit()
+                    await session.refresh(n)
+
+
+            # logger.info(f"this level -> {level} and the note id: {note}")
+
+    return new_fragrance
+
+
     return new_fragrance
 
 async def add_new_company(session: AsyncSession, company_data: CompanySchema):

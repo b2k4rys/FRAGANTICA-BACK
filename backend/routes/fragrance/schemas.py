@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, field_validator
-from typing import List
+from typing import List, Dict
 from backend.core.db.models.fragrance import FragranceType, WishListType
 class FragranceSchema(BaseModel):
     id: int
@@ -23,7 +23,7 @@ class FragranceRequestSchema(BaseModel):
     description: str | None = None
     fragrance_type: FragranceType
     price: int 
-    notes: list[int]
+    notes: List[Dict[str, int]] | None = None
 
 
 class FragranceUpdate(BaseModel):
