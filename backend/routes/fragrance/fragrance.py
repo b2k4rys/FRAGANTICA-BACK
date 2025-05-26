@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, Request
 from .schemas import FragranceSchema, CompanySchema, FragranceUpdate, FragranceRequestSchema, NoteRequestSchema, NoteGroupRequestSchema, NoteUpdateSchema, ReviewCreateSchema, ReviewUpdateSchema, WishlistRequestSchema
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
-from .crud import add_new_fragrance, add_new_company, change_fragrance, get_fragrance_by_id, delete_fragrance_by_id, get_all_companies
 from backend.core.db.session import get_async_session
 from backend.core.db.models.fragrance import FragranceType
 from backend.core.db.models.user import User as UserModel

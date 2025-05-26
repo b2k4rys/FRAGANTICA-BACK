@@ -11,7 +11,9 @@ from pydantic import ValidationError
 from fastapi_csrf_protect import CsrfProtect
 
 async def add_new_fragrance(session: AsyncSession, fragrance_data: FragranceRequestSchema, current_user: UserModel):
-    new_fragrance = Fragrance(**fragrance_data.model_dump())
+    new_fragrance = Fragrance(name=fragrance_data.name, company_id=fragrance_data.company_id, description=fragrance_data.description, fragrance_type=fragrance_data.fragrance_type, price=fragrance_data.price)
+    if fragrance_data.notes:
+        pass
     session.add(new_fragrance)
     await session.commit()
     await session.refresh(new_fragrance)

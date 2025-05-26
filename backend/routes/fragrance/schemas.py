@@ -23,6 +23,7 @@ class FragranceRequestSchema(BaseModel):
     description: str | None = None
     fragrance_type: FragranceType
     price: int 
+    notes: list[int]
 
 
 class FragranceUpdate(BaseModel):
