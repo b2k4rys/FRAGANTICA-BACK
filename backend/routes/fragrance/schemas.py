@@ -23,7 +23,22 @@ class FragranceRequestSchema(BaseModel):
     description: str | None = None
     fragrance_type: FragranceType
     price: int 
-    notes: List[Dict[str, int]] | None = None
+    notes: List["NoteEntry"] | None = None
+
+  
+class NoteEntry(BaseModel):
+    note_id: int
+    note_type: str
+
+    @field_validator("note_type")
+    def validate_note(cls, val):
+        allowed_types = {'top', 'middle', 'base'}
+        if val.lower() not in allowed_types:
+            raise ValueError(f"Note type must be one of {allowed_types}")
+        return val.lower()
+
+
+
 
 
 class FragranceUpdate(BaseModel):

@@ -6,6 +6,7 @@ from .schemas import CompanySchema, FragranceUpdate, FragranceRequestSchema, Not
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from fastapi import HTTPException, Response, Request, status
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from ..auth.services import get_current_user
 from pydantic import ValidationError
 from fastapi_csrf_protect import CsrfProtect
@@ -18,26 +19,33 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 async def add_new_fragrance(session: AsyncSession, fragrance_data: FragranceRequestSchema, current_user: UserModel):
-    new_fragrance = Fragrance(name=fragrance_data.name, company_id=fragrance_data.company_id, description=fragrance_data.description, fragrance_type=fragrance_data.fragrance_type, price=fragrance_data.price)
-    session.add(new_fragrance)
-    await session.commit()
-    await session.refresh(new_fragrance)
-    if fragrance_data.notes:
-        for note in fragrance_data.notes:
-            for key, value in note.items():
+    try:
+        new_fragrance = Fragrance(name=fragrance_data.name, company_id=fragrance_data.company_id, description=fragrance_data.description, fragrance_type=fragrance_data.fragrance_type, price=fragrance_data.price)
+        session.add(new_fragrance)
+        await session.flush()
+        if fragrance_data.notes:
+            for note in fragrance_data.notes:
+                n = FragranceNote(fragrance_id=new_fragrance.id, note_id=note.note_id, note_type=note.note_type)
+                session.add(n)
+            await session.commit()
+            await session.refresh(new_fragrance)
+            return new_fragrance
+    except IntegrityError as e:
+            await session.rollback()
+            raise HTTPException(status_code=400, detail=f"Database integrity error: {str(e)}")
+    except SQLAlchemyError as e:
+            await session.rollback()
+            raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    except Exception as e:
+            await session.rollback()
+            raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
-                    n = FragranceNote(fragrance_id=new_fragrance.id, note_id=value, note_type=key)
-                    session.add(n)
-                    await session.commit()
-                    await session.refresh(n)
 
 
-            # logger.info(f"this level -> {level} and the note id: {note}")
-
-    return new_fragrance
 
 
-    return new_fragrance
+
+
 
 async def add_new_company(session: AsyncSession, company_data: CompanySchema):
 
@@ -110,7 +118,10 @@ async def change_fragrance(
 
 
 async def get_fragrance_by_id(fragrance_id: int, session: AsyncSession):
-    stmt = select(Fragrance).options(selectinload(Fragrance.fragrance_reviews)).filter_by(id=fragrance_id)
+    stmt = select(Fragrance).options(
+        selectinload(Fragrance.fragrance_reviews),
+        selectinload(Fragrance.notes)
+    ).filter_by(id=fragrance_id)
     result = await session.execute(stmt)
     fragrance = result.scalar_one_or_none()
     if fragrance is None:
