@@ -4,7 +4,7 @@ from backend.core.db.models.user import User as UserModel
 from backend.core.configs.config import settings
 from .schemas import CompanySchema, FragranceUpdate, FragranceRequestSchema, NoteRequestSchema, NoteGroupRequestSchema, NoteUpdateSchema, ReviewCreateSchema, ReviewUpdateSchema, WishlistRequestSchema
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, joinedload
 from fastapi import HTTPException, Response, Request, status
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from ..auth.services import get_current_user
@@ -41,12 +41,6 @@ async def add_new_fragrance(session: AsyncSession, fragrance_data: FragranceRequ
             raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
 
-
-
-
-
-
-
 async def add_new_company(session: AsyncSession, company_data: CompanySchema):
 
     new_company = Company(**company_data.model_dump())
@@ -63,8 +57,15 @@ async def get_all_fragrances(session: AsyncSession, company_name: str | None = N
     if fragrance_type:
         filters.append(Fragrance.fragrance_type == fragrance_type)
     
-    stmt = select(Fragrance).join(Company).filter(*filters).options(selectinload(Fragrance.company))
- 
+    stmt = (
+            select(Fragrance)
+            .join(Company)
+            .filter(*filters)
+            .options(
+                selectinload(Fragrance.company),
+                selectinload(Fragrance.notes)
+            )
+        )
     result = await session.execute(stmt)
     fragrances = result.scalars().all()
     if not fragrances:
@@ -232,7 +233,6 @@ async def edit_review(review_id: int, review_update: ReviewUpdateSchema, request
     await session.commit()
     await session.refresh(review)
     return review
-
 
 
 #                       ==== WISHLIST ==== 
