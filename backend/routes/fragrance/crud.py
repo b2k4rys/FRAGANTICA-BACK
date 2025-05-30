@@ -255,3 +255,13 @@ async def add_to_or_edit_wishlist(wishlist: WishlistRequestSchema, request: Requ
     await session.refresh(wishlist_db)
     return wishlist_db
 
+async def remove_from_wishlist(wihlist_id: int,session: AsyncSession, request: Request, current_user: UserModel, csrf_protector: CsrfProtect):
+    stmt = select(Wishlist).filter_by(id=wihlist_id, user_id=current_user.id)
+    result = await session.execute(stmt)
+    wishlist = result.scalar_one_or_none()
+
+    if wishlist is None:
+        raise HTTPException(status_code=404, detail="Wishlist item not found")
+    await session.delete(wishlist)
+    await session.commit()
+    return Response(status_code=200, content="Item was deleted")
