@@ -43,6 +43,9 @@ async def get_all_company(session: AsyncSession  = Depends(get_async_session)):
 async def add_company( request: Request,company_data: CompanySchema, session: AsyncSession = Depends(get_async_session), current_user: UserModel = Depends(require_role([Role.ADMIN]))):
     return await crud.add_new_company(session, company_data)
 
+@router.delete("/company/{company_id}")
+async def remove_company(company_id: int, session: AsyncSession = Depends(get_async_session), current_user: UserModel = Depends(require_role([Role.ADMIN]))):
+    return await crud.remove_company(company_id, session)
 
 #                       ==== ACCCORDS ==== 
 @router.get("/accords")

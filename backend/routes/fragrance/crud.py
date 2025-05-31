@@ -49,6 +49,18 @@ async def add_new_company(session: AsyncSession, company_data: CompanySchema):
     await session.refresh(new_company)
     return new_company
 
+async def remove_company(company_id: int,session: AsyncSession):
+    stmt = select(Company).filter_by(id=company_id)
+    res = await session.execute(stmt)
+    company =  res.scalar_one_or_none()
+    
+    if company is None:
+        raise HTTPException(status_code=404, detail="Company not found")
+    await session.delete(company)
+    await session.commit()
+    return Response(status_code=200, content="Item was deleted")
+
+
 async def get_all_fragrances(session: AsyncSession, company_name: str | None = None, fragrance_type: FragranceType | None = None ):
     filters = []
     if company_name:
