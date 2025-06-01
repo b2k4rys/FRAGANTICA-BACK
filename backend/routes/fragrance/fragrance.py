@@ -59,6 +59,9 @@ async def add_accord(accord: NoteRequestSchema, session: AsyncSession = Depends(
 @router.patch("/accords/{accord_id}")
 async def update_accord(accord_id: int, accord_update: NoteUpdateSchema, session: AsyncSession = Depends(get_async_session), current_user: UserModel = Depends(require_role([Role.ADMIN]))):
     return await crud.change_accord(accord_id, accord_update, session)
+@router.delete("/accords/{accord_id}")
+async def remove_note(note_id: int, session: AsyncSession = Depends(get_async_session)):
+    return await crud.remove_note(note_id, session)
 
 @router.post("/accords/group")
 async def add_accord_group(accord_group: NoteGroupRequestSchema, session: AsyncSession = Depends(get_async_session), current_user: UserModel = Depends(require_role([Role.ADMIN]))):

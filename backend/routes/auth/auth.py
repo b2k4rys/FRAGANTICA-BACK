@@ -25,7 +25,7 @@ async def register_user(
     if (await session.execute(select(UserModel).filter(UserModel.username == user.username))).scalars().first():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already taken")
     if (await session.execute(select(UserModel).filter(UserModel.email == user.email))).scalars().first():
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email alreadt taken")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already taken")
     hashed_password = hash_password(user.password)
     db_user = UserModel(username=user.username, email=user.email, hashed_password=hashed_password, role=Role.USER)
     session.add(db_user)

@@ -187,6 +187,19 @@ async def change_accord(accord_id: int, accord_update: NoteUpdateSchema, session
     await session.refresh(accord)
     return accord
 
+async def remove_note(note_id: int, session: AsyncSession):
+    stmt = select(Note).filter_by(id=note_id)
+    result = await session.execute(stmt)
+    note = result.scalar_one_or_none()
+    if note is None:
+        raise HTTPException(code=404, detail="Item not found")
+    try:
+        await session.delete(note)
+        await session.commit()
+        return Response(status_code=200, content="Item was deleted successfully")
+    except Exception as e:
+        await session.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
 async def add_accord_group(note_group: NoteGroupRequestSchema, session: AsyncSession):
