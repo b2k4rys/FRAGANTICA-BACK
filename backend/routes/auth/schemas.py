@@ -1,5 +1,5 @@
 # src/schemas/user.py
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, field_validator, ConfigDict
 from typing import Optional, List
 from backend.core.db.models.user import Role
 
@@ -20,10 +20,19 @@ class UserCreate(UserBase):
 class User(UserBase):
     id: int
 
-    class Config:
-        from_attributes = True
-
+    model_config = ConfigDict(from_attributes=True)
 class Token(BaseModel):
     access_token: str
     token_type: str
 
+
+class UserEdit(BaseModel):
+    username: str | None = None
+    email: str | None = None
+
+class UserResponseSchema(BaseModel):
+    id: int
+    username: str
+    email: str
+    role: Role
+    model_config = ConfigDict(from_attributes=True)

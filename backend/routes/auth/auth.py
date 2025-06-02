@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_csrf_protect import CsrfProtect
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from ..auth.schemas import User, UserCreate, Token
+from ..auth.schemas import User, UserCreate, Token, UserEdit, UserResponseSchema
 from backend.core.db.models.user import User as UserModel
 from backend.core.db.models.user import Role
 from backend.core.configs.config import settings
@@ -38,6 +38,7 @@ async def register_user(
 async def login_user(request: Request,response: Response, form_data: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_async_session), csrf_protect: CsrfProtect = Depends()):
 
     user = await authenticate_user(username=form_data.username, password=form_data.password, session=session)
+
     
     if not user:
         raise HTTPException(
@@ -81,7 +82,22 @@ async def get_csrf_token(response: Response, csrf_protect: CsrfProtect = Depends
     csrf_protect.set_csrf_cookie(signed_token, response)
     return {"csrf_token": csrf_token}
 
-
 @router.get("/me")
-async def edit_user_info(response: Response, request: Request, current_user: UserModel = Depends(require_role([Role.USER, Role.ADMIN]))):
-    return current_user, request.headers
+async def get_info_about_user(current_user: UserModel = Depends(require_role([Role.USER, Role.ADMIN]))):
+    return UserResponseSchema.model_validate(current_user)
+
+
+@router.patch("/me")
+async def edit_user_info(user: UserEdit, current_user: UserModel = Depends(require_role([Role.USER, Role.ADMIN])), session: AsyncSession = Depends(get_async_session)):
+    if (await session.execute(select(UserModel).filter_by(username=user.username))).scalar_one_or_none():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already taken")
+    if (await session.execute(select(UserModel).filter_by(email=user.email))).scalar_one_or_none():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already taken")
+    user_db = (await session.execute(select(UserModel).filter_by(id=current_user.id))).scalar_one_or_none()
+    user = user.model_dump(exclude_unset=True)
+
+    for key, value in user.items():
+        setattr(user_db, key, value)
+    await session.commit()
+    await session.refresh(user_db)
+    return user_db
