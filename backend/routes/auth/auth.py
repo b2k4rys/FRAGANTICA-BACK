@@ -8,7 +8,7 @@ from backend.core.db.models.user import User as UserModel
 from backend.core.db.models.user import Role
 from backend.core.configs.config import settings
 from backend.core.db.session import get_async_session
-from .services import hash_password, create_access_token, authenticate_user
+from .services import hash_password, create_access_token, authenticate_user, require_role
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
@@ -80,3 +80,8 @@ async def get_csrf_token(response: Response, csrf_protect: CsrfProtect = Depends
     )
     csrf_protect.set_csrf_cookie(signed_token, response)
     return {"csrf_token": csrf_token}
+
+
+@router.get("/me")
+async def edit_user_info(response: Response, request: Request, current_user: UserModel = Depends(require_role([Role.USER, Role.ADMIN]))):
+    return current_user, request.headers

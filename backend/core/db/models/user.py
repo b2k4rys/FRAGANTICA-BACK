@@ -5,6 +5,7 @@ from typing import List
 import enum
 from sqlalchemy import Enum as SqlEnum
 
+
 metadata = Base.metadata
 
 
@@ -21,7 +22,9 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(50), index=True, nullable=False)
     email: Mapped[str] = mapped_column(String(100), index=True,unique=True, nullable=False)
     role: Mapped[Role] = mapped_column(Enum(Role), default=Role.USER, nullable=False)
- 
+
+    # ava: Mapped[str | None] = mapped_column(Text, nullable=True)
+
     hashed_password: Mapped[str] = mapped_column(Text, nullable=True)
 
     reviews: Mapped[List["Review"]] = relationship(back_populates="user")
