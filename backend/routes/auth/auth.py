@@ -109,23 +109,25 @@ async def edit_user_info(
         if (await session.execute(select(UserModel).filter_by(username=username))).scalar_one_or_none():
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already taken")
     if email:
+        try:
+            vaildated_email = validate_email(email)
+        except PydanticCustomError as e:
+            return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="not correct email")
+
         if (await session.execute(select(UserModel).filter_by(email=email))).scalar_one_or_none():
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already taken")
 
     user_db = (await session.execute(select(UserModel).filter_by(id=current_user.id))).scalar_one_or_none()
 
-    try:
-        if username: user_db.username = username
-        vaildated_email = validate_email(email)
-        if email: user_db.email = email
-        if file:
-            user_db.ava = post_ava(file)
-        await session.commit()
-        await session.refresh(user_db)
-        return user_db
 
-    except PydanticCustomError as e:
-        return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="not correct email")
+    if username: user_db.username = username
+    if email: user_db.email = email
+    if file:
+        user_db.ava = post_ava(file)
+    await session.commit()
+    await session.refresh(user_db)
+    return user_db
+
 
 
 
@@ -137,11 +139,18 @@ def post_ava(file: UploadFile | None = None):
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
+    
     response = cloudinary.uploader.upload(f"backend/static/images/{file.filename}")
     url = response['secure_url']
 
     if url is None: 
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='problem with ava upload')
+    
+    if os.path.exists(file_path):
+        os.remove(file_path)
+        print("File deleted")
+    else:
+        print("File not found")
     return url
 
 
