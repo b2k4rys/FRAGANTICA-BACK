@@ -1,5 +1,7 @@
 from pydantic_settings import BaseSettings
-
+import cloudinary
+import cloudinary.uploader
+from cloudinary.utils import cloudinary_url
 
 
 class Settings(BaseSettings):
@@ -12,10 +14,21 @@ class Settings(BaseSettings):
     cookie_secure: bool = True
     cookie_httponly: bool = True
     cookie_samesite: str = "lax"
+    cloud_name: str
+    api_key: str
+    api_secret: str
+    secure: bool = True
+
 
 
     class Config:
         env_file = ".env"
-
-
 settings = Settings()
+
+cloudinary.config( 
+    cloud_name = settings.cloud_name, 
+    api_key = settings.api_key, 
+    api_secret = settings.api_secret, 
+    secure=settings.secure
+)
+

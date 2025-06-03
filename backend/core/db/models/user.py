@@ -23,7 +23,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(100), index=True,unique=True, nullable=False)
     role: Mapped[Role] = mapped_column(Enum(Role), default=Role.USER, nullable=False)
 
-    # ava: Mapped[str | None] = mapped_column(Text, nullable=True)
+    ava: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     hashed_password: Mapped[str] = mapped_column(Text, nullable=True)
 

@@ -2,6 +2,7 @@
 from pydantic import BaseModel, EmailStr, field_validator, ConfigDict
 from typing import Optional, List
 from backend.core.db.models.user import Role
+from fastapi import UploadFile
 
 class UserBase(BaseModel):
     username: str
@@ -29,6 +30,8 @@ class Token(BaseModel):
 class UserEdit(BaseModel):
     username: str | None = None
     email: str | None = None
+    ava: str | None= None
+ 
 
 class UserResponseSchema(BaseModel):
     id: int

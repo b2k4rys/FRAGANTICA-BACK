@@ -4,9 +4,11 @@ from backend.routes.auth.auth import router as auth_router
 from backend.core.configs.config import settings
 from fastapi_csrf_protect import CsrfProtect
 from pydantic_settings import BaseSettings
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
 
+app.mount("/static", StaticFiles(directory="backend/static"), name="static")
 class CsrfSettings(BaseSettings):
     secret_key: str = settings.jwt_secret_key 
     cookie_samesite: str = settings.cookie_samesite
