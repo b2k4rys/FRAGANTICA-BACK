@@ -12,7 +12,9 @@ from .services import hash_password, create_access_token, authenticate_user, req
 from fastapi import UploadFile
 import os
 import shutil
-
+from fastapi import Form, File
+from pydantic import validate_email
+from pydantic_core import PydanticCustomError
 import cloudinary
 import cloudinary.uploader
 from cloudinary.utils import cloudinary_url
@@ -95,44 +97,51 @@ async def get_info_about_user(current_user: UserModel = Depends(require_role([Ro
 UPLOAD_DIR = "backend/static/images"
 
 @router.patch("/me")
-async def edit_user_info(user: UserEdit,  current_user: UserModel = Depends(require_role([Role.USER, Role.ADMIN])), session: AsyncSession = Depends(get_async_session)):
-    if (await session.execute(select(UserModel).filter_by(username=user.username))).scalar_one_or_none():
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already taken")
-    if (await session.execute(select(UserModel).filter_by(email=user.email))).scalar_one_or_none():
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already taken")
+async def edit_user_info(
+    username: str = Form(None),
+    email: str = Form(None),
+    file: UploadFile = File(None),
+    current_user: UserModel = Depends(require_role([Role.USER, Role.ADMIN])),
+    session: AsyncSession = Depends(get_async_session)
+):
+
+    if username:
+        if (await session.execute(select(UserModel).filter_by(username=username))).scalar_one_or_none():
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already taken")
+    if email:
+        if (await session.execute(select(UserModel).filter_by(email=email))).scalar_one_or_none():
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already taken")
+
     user_db = (await session.execute(select(UserModel).filter_by(id=current_user.id))).scalar_one_or_none()
-    user = user.model_dump(exclude_unset=True)
 
+    try:
+        if username: user_db.username = username
+        vaildated_email = validate_email(email)
+        if email: user_db.email = email
+        if file:
+            user_db.ava = post_ava(file)
+        await session.commit()
+        await session.refresh(user_db)
+        return user_db
 
-    for key, value in user.items():
-        setattr(user_db, key, value)
-    await session.commit()
-    await session.refresh(user_db)
-    return user_db
+    except PydanticCustomError as e:
+        return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="not correct email")
+
 
 
 def post_ava(file: UploadFile | None = None):
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Only image files are allowed")
-    
-    file_path = os.path.join(UPLOAD_DIR, file.filename)
-
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    response = cloudinary.uploader.upload(f"/static/images/{file.filename}")
-    return response.secure_url
-
-    return {"filename": file.filename, "url": f"/static/images/{file.filename}"}
-
-@router.post("/ava")
-async def post_ava(file: UploadFile | None = None):
     file_path = os.path.join(UPLOAD_DIR, file.filename)
 
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
     response = cloudinary.uploader.upload(f"backend/static/images/{file.filename}")
-    return response
+    url = response['secure_url']
 
-    return {"filename": file.filename, "url": f"/static/images/{file.filename}"}
+    if url is None: 
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='problem with ava upload')
+    return url
+
+
