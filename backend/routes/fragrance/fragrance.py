@@ -9,12 +9,14 @@ from backend.core.db.models.user import Role
 from ..auth.services import get_current_user, require_role
 from ..fragrance import crud
 from fastapi_csrf_protect import CsrfProtect
+from fastapi_pagination import Page, paginate
+
 router = APIRouter(prefix="/fragrance", tags=['Fragrance routes'])
 
 
 #                       ==== FRAGRANCE ==== 
-@router.get("/all", response_model=List[FragranceSchema])
-async def get_fragrances(session: AsyncSession = Depends(get_async_session), company_name: str | None = None, fragrance_type: FragranceType | None = None):
+@router.get("/all", response_model=List[FragranceSchema]) 
+async def get_fragrances(session: AsyncSession = Depends(get_async_session), company_name: str | None = None, fragrance_type: FragranceType | None = None) -> Page[int]:
     return await crud.get_all_fragrances(session, company_name, fragrance_type)
 
 @router.get("/all/{fragrance_id}")
