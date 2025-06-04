@@ -74,7 +74,14 @@ async def get_all_fragrances(
         filters.append(Company.name.ilike(f"%{company_name}%"))
     if fragrance_type:
         filters.append(Fragrance.fragrance_type == fragrance_type)
-    total = select(func.count()).join(Company).filter(*filters).select_from(Fragrance)
+    total_stmt = (
+        select(func.count())
+        .select_from(Fragrance)
+        .join(Company)
+        .filter(*filters)
+    )
+
+    total = await session.scalar(total_stmt)
 
     offset = (page - 1) * page_size
     stmt = (
@@ -93,15 +100,29 @@ async def get_all_fragrances(
     fragrances = result.scalars().all()
     if not fragrances:
         raise HTTPException(status_code=404, detail="Not found")
-    return fragrances
+    return {
+    "total": total,
+    "fragrances": fragrances
+    }
 
-async def get_all_companies(session: AsyncSession):
-    stmt = select(Company)
+async def get_all_companies(
+    session: AsyncSession,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100)
+):
+    offset = (page - 1) * page_size
+    total_stmt = select(func.count()).select_from(Company)
+    total = await session.scalar(total_stmt)
+
+    stmt = select(Company).offset(offset).limit(page_size)
     result = await session.execute(stmt)
     companies = result.scalars().all()
     if not companies:
             raise HTTPException(status_code=404, detail="Not found")
-    return companies
+    return {
+    "total": total,
+    "companies":companies
+    }
 
 
 async def change_fragrance(
@@ -167,8 +188,13 @@ async def delete_fragrance_by_id(fragrance_id: int, session: AsyncSession):
 
 #  ACCORDS
 
-async def get_accords(session: AsyncSession):
-    stmt  = select(Note)
+async def get_accords(
+    session: AsyncSession,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100)
+):
+    offset = (page - 1) * page_size
+    stmt  = select(Note).offset(offset).limit(page_size)
     result  = await session.execute(stmt)
     accords = result.scalars().all()
     if not accords:
@@ -222,6 +248,27 @@ async def add_accord_group(note_group: NoteGroupRequestSchema, session: AsyncSes
 
 
 #                       ==== REVIEWS ==== 
+
+async def get_all_review(
+    request: Request, 
+    current_user: UserModel, 
+    session: AsyncSession,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100)
+):
+    total_stmt = select(func.count()).select_from(Review).filter_by(user_id=current_user.id)
+    total = await session.scalar(total_stmt)
+    offset =  (page - 1) * page_size
+    stmt = select(Review).filter_by(user_id=current_user.id).offset(offset).limit(page_size)
+    result = await session.execute(stmt)
+    reviews = result.scalars().all()
+    if reviews is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    return {
+    "total_count": total,
+    "reviews": reviews
+    }
+
 async def add_review(review: ReviewCreateSchema, request: Request, current_user: UserModel, session: AsyncSession, csrf_protector: CsrfProtect):
     if request.cookies.get(settings.cookie_name):
         csrf_protector.validate_csrf(request)

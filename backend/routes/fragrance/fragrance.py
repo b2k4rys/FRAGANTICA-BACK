@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Request, Query
-from .schemas import FragranceSchema, CompanySchema, FragranceUpdate, FragranceRequestSchema, NoteRequestSchema, NoteGroupRequestSchema, NoteUpdateSchema, ReviewCreateSchema, ReviewUpdateSchema, WishlistRequestSchema
+from .schemas import FragranceSchema, CompanySchema, FragranceUpdate, FragranceRequestSchema, NoteRequestSchema, NoteGroupRequestSchema, NoteUpdateSchema, ReviewCreateSchema, ReviewUpdateSchema, WishlistRequestSchema, FragrancePaginatesResponseSchema
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from backend.core.db.session import get_async_session
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/fragrance", tags=['Fragrance routes'])
 
 
 #                       ==== FRAGRANCE ==== 
-@router.get("/all", response_model=List[FragranceSchema]) 
+@router.get("/all", response_model=FragrancePaginatesResponseSchema) 
 async def get_fragrances(
     session: AsyncSession = Depends(get_async_session), 
     company_name: str | None = None, 
@@ -44,8 +44,12 @@ async def delete_fragrance(fragrance_id: int,session: AsyncSession = Depends(get
 
 #                       ==== COMPANY ==== 
 @router.get("/company/all")
-async def get_all_company(session: AsyncSession  = Depends(get_async_session)):
-    return await crud.get_all_companies(session)
+async def get_all_company(
+    session: AsyncSession  = Depends(get_async_session),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100)
+):
+    return await crud.get_all_companies(session, page, page_size)
 
 @router.post("/new-company")
 async def add_company( request: Request,company_data: CompanySchema, session: AsyncSession = Depends(get_async_session), current_user: UserModel = Depends(require_role([Role.ADMIN]))):
@@ -57,8 +61,12 @@ async def remove_company(company_id: int, session: AsyncSession = Depends(get_as
 
 #                       ==== ACCCORDS ==== 
 @router.get("/accords")
-async def get_accords(session: AsyncSession = Depends(get_async_session)):
-    return await crud.get_accords(session)
+async def get_accords(
+    session: AsyncSession = Depends(get_async_session),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100)
+):
+    return await crud.get_accords(session, page, page_size)
 
 @router.post("/accords/")
 async def add_accord(accord: NoteRequestSchema, session: AsyncSession = Depends(get_async_session), current_user: UserModel = Depends(require_role([Role.ADMIN]))):
@@ -77,6 +85,16 @@ async def add_accord_group(accord_group: NoteGroupRequestSchema, session: AsyncS
 
 
 #                       ==== REVIEWS ==== 
+@router.get("/reviews")
+async def get_all_review(
+    request: Request, 
+    current_user: UserModel = Depends(require_role([Role.ADMIN, Role.USER])), 
+    session: AsyncSession = Depends(get_async_session),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100)
+):
+    return await crud.get_all_review(request, current_user, session, page, page_size)
+
 @router.post("/reviews")
 async def add_review(review: ReviewCreateSchema, request: Request, current_user: UserModel = Depends(require_role([Role.ADMIN, Role.USER])), session: AsyncSession = Depends(get_async_session), csrf_protector: CsrfProtect = Depends() ):
     return await crud.add_review(review, request, current_user, session, csrf_protector)

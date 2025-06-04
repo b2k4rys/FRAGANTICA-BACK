@@ -16,6 +16,9 @@ class FragranceSchema(BaseModel):
 class FragranceShemaById(FragranceSchema):
     reviews: List["ReviewResponseSchema"] | None = None
 
+class FragrancePaginatesResponseSchema(BaseModel):
+    total: int
+    fragrances: List[FragranceSchema]
 
 class FragranceRequestSchema(BaseModel):
     name: str = Field(min_length=3, max_length=150)
