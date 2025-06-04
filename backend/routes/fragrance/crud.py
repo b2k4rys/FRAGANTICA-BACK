@@ -3,12 +3,12 @@ from backend.core.db.models.fragrance import Fragrance, Company, FragranceType, 
 from backend.core.db.models.user import User as UserModel
 from backend.core.configs.config import settings
 from .schemas import CompanySchema, FragranceUpdate, FragranceRequestSchema, NoteRequestSchema, NoteGroupRequestSchema, NoteUpdateSchema, ReviewCreateSchema, ReviewUpdateSchema, WishlistRequestSchema
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload, joinedload
-from fastapi import HTTPException, Response, Request, status
+from fastapi import HTTPException, Response, Request, status, Query
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from ..auth.services import get_current_user
-from pydantic import ValidationError
+from pydantic import ValidationError, Field
 from fastapi_csrf_protect import CsrfProtect
 import logging
 
@@ -61,14 +61,22 @@ async def remove_company(company_id: int,session: AsyncSession):
     return Response(status_code=200, content="Item was deleted")
 
 
-async def get_all_fragrances(session: AsyncSession, company_name: str | None = None, fragrance_type: FragranceType | None = None ):
+async def get_all_fragrances(
+    session: AsyncSession,
+    company_name: str | None = None, 
+    fragrance_type: FragranceType | None = None,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100)
+):
     filters = []
     if company_name:
         company_name = company_name.strip()
         filters.append(Company.name.ilike(f"%{company_name}%"))
     if fragrance_type:
         filters.append(Fragrance.fragrance_type == fragrance_type)
-    
+    total = select(func.count()).join(Company).filter(*filters).select_from(Fragrance)
+
+    offset = (page - 1) * page_size
     stmt = (
             select(Fragrance)
             .join(Company)
@@ -77,7 +85,10 @@ async def get_all_fragrances(session: AsyncSession, company_name: str | None = N
                 selectinload(Fragrance.company),
                 selectinload(Fragrance.notes)
             )
+            .offset(offset)
+            .limit(page_size)
         )
+    
     result = await session.execute(stmt)
     fragrances = result.scalars().all()
     if not fragrances:

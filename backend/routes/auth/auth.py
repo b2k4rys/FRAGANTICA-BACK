@@ -126,6 +126,11 @@ async def edit_user_info(
 
 
 
-
-
+@router.get("/data")
+async def get_request_data(request: Request, response: Response):
+    data =  {
+        "cookies":request.cookies,
+        "headers": request.headers
+    }
+    return data
 

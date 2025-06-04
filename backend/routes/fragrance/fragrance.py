@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, Query
 from .schemas import FragranceSchema, CompanySchema, FragranceUpdate, FragranceRequestSchema, NoteRequestSchema, NoteGroupRequestSchema, NoteUpdateSchema, ReviewCreateSchema, ReviewUpdateSchema, WishlistRequestSchema
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
@@ -16,8 +16,14 @@ router = APIRouter(prefix="/fragrance", tags=['Fragrance routes'])
 
 #                       ==== FRAGRANCE ==== 
 @router.get("/all", response_model=List[FragranceSchema]) 
-async def get_fragrances(session: AsyncSession = Depends(get_async_session), company_name: str | None = None, fragrance_type: FragranceType | None = None) -> Page[int]:
-    return await crud.get_all_fragrances(session, company_name, fragrance_type)
+async def get_fragrances(
+    session: AsyncSession = Depends(get_async_session), 
+    company_name: str | None = None, 
+    fragrance_type: FragranceType | None = None,  
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100)
+):
+    return await crud.get_all_fragrances(session, company_name, fragrance_type, page, page_size)
 
 @router.get("/all/{fragrance_id}")
 async def get_fragrance(fragrance_id: int,session: AsyncSession = Depends(get_async_session)):
