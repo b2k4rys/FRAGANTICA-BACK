@@ -18,7 +18,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-async def add_new_fragrance(session: AsyncSession, fragrance_data: FragranceRequestSchema, current_user: UserModel):
+async def add_new_fragrance(
+    session: AsyncSession, 
+    fragrance_data: FragranceRequestSchema, 
+):
     try:
         new_fragrance = Fragrance(name=fragrance_data.name, company_id=fragrance_data.company_id, description=fragrance_data.description, fragrance_type=fragrance_data.fragrance_type, price=fragrance_data.price)
         session.add(new_fragrance)
@@ -41,7 +44,10 @@ async def add_new_fragrance(session: AsyncSession, fragrance_data: FragranceRequ
             raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
 
-async def add_new_company(session: AsyncSession, company_data: CompanySchema):
+async def add_new_company(
+    session: AsyncSession, 
+    company_data: CompanySchema
+):
 
     new_company = Company(**company_data.model_dump())
     session.add(new_company)
@@ -49,7 +55,10 @@ async def add_new_company(session: AsyncSession, company_data: CompanySchema):
     await session.refresh(new_company)
     return new_company
 
-async def remove_company(company_id: int,session: AsyncSession):
+async def remove_company(
+    company_id: int,
+    session: AsyncSession
+):
     stmt = select(Company).filter_by(id=company_id)
     res = await session.execute(stmt)
     company =  res.scalar_one_or_none()
@@ -162,7 +171,10 @@ async def change_fragrance(
     return fragrance
 
 
-async def get_fragrance_by_id(fragrance_id: int, session: AsyncSession):
+async def get_fragrance_by_id(
+    fragrance_id: int, 
+    session: AsyncSession
+):
     stmt = select(Fragrance).options(
         selectinload(Fragrance.fragrance_reviews),
         selectinload(Fragrance.notes)
@@ -174,7 +186,10 @@ async def get_fragrance_by_id(fragrance_id: int, session: AsyncSession):
     return fragrance
 
 
-async def delete_fragrance_by_id(fragrance_id: int, session: AsyncSession):
+async def delete_fragrance_by_id(
+    fragrance_id: int, 
+    session: AsyncSession
+):
     stmt = select(Fragrance).filter_by(id=fragrance_id)
     result = await session.execute(stmt)
     fragrance = result.scalar_one()
@@ -201,14 +216,21 @@ async def get_accords(
         raise HTTPException(status_code=404, detail="Not found")
     return accords
 
-async def add_accord(note: NoteRequestSchema, session: AsyncSession):
+async def add_accord(
+    note: NoteRequestSchema, 
+    session: AsyncSession
+):
     new_accord = Note(**note.model_dump())
     session.add(new_accord)
     await session.commit()
     await session.refresh(new_accord)
     return new_accord
 
-async def change_accord(accord_id: int, accord_update: NoteUpdateSchema, session: AsyncSession):
+async def change_accord(
+    accord_id: int, 
+    accord_update: NoteUpdateSchema, 
+    session: AsyncSession
+):
     result = await session.execute(select(Note).filter_by(id=accord_id))
     accord = result.scalar_one_or_none()
 
@@ -224,7 +246,10 @@ async def change_accord(accord_id: int, accord_update: NoteUpdateSchema, session
     await session.refresh(accord)
     return accord
 
-async def remove_note(note_id: int, session: AsyncSession):
+async def remove_note(
+    note_id: int, 
+    session: AsyncSession
+):
     stmt = select(Note).filter_by(id=note_id)
     result = await session.execute(stmt)
     note = result.scalar_one_or_none()
@@ -239,7 +264,10 @@ async def remove_note(note_id: int, session: AsyncSession):
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
-async def add_accord_group(note_group: NoteGroupRequestSchema, session: AsyncSession):
+async def add_accord_group(
+    note_group: NoteGroupRequestSchema, 
+    session: AsyncSession
+):
     new_accord_group = NoteGroup(**note_group.model_dump())
     session.add(new_accord_group)
     await session.commit()
@@ -269,7 +297,13 @@ async def get_all_review(
     "reviews": reviews
     }
 
-async def add_review(review: ReviewCreateSchema, request: Request, current_user: UserModel, session: AsyncSession, csrf_protector: CsrfProtect):
+async def add_review(
+    review: ReviewCreateSchema, 
+    request: Request, 
+    current_user: UserModel, 
+    session: AsyncSession, 
+    csrf_protector: CsrfProtect
+):
     if request.cookies.get(settings.cookie_name):
         csrf_protector.validate_csrf(request)
     
@@ -284,7 +318,13 @@ async def add_review(review: ReviewCreateSchema, request: Request, current_user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-async def delete_review(review_id: int, request: Request, current_user: UserModel, session: AsyncSession, csrf_protector: CsrfProtect):
+async def delete_review(
+    review_id: int, 
+    request: Request, 
+    current_user: UserModel, 
+    session: AsyncSession, 
+    csrf_protector: CsrfProtect
+):
     if request.cookies.get(settings.cookie_name):
         csrf_protector.validate_csrf(request)
     stmt = select(Review).filter_by(id = review_id, user_id=current_user.id)
@@ -300,7 +340,14 @@ async def delete_review(review_id: int, request: Request, current_user: UserMode
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
     
 
-async def edit_review(review_id: int, review_update: ReviewUpdateSchema, request: Request, current_user: UserModel, session: AsyncSession, csrf_protector: CsrfProtect):
+async def edit_review(
+    review_id: int, 
+    review_update: ReviewUpdateSchema, 
+    request: Request, 
+    current_user: UserModel, 
+    session: AsyncSession, 
+    csrf_protector: CsrfProtect
+):
     if request.cookies.get(settings.cookie_name):
         csrf_protector.validate_csrf(request)
     stmt = select(Review).filter_by(id = review_id, user_id=current_user.id)
@@ -319,7 +366,13 @@ async def edit_review(review_id: int, review_update: ReviewUpdateSchema, request
 
 
 #                       ==== WISHLIST ==== 
-async def add_to_or_edit_wishlist(wishlist: WishlistRequestSchema, request: Request, session: AsyncSession, current_user: UserModel, csrf_protector: CsrfProtect):
+async def add_to_or_edit_wishlist(
+    wishlist: WishlistRequestSchema, 
+    request: Request, 
+    session: AsyncSession, 
+    current_user: UserModel, 
+    csrf_protector: CsrfProtect
+):
     if request.cookies.get(settings.cookie_name):
         csrf_protector.validate_csrf(request)
     stmt = select(Wishlist).filter_by(user_id=current_user.id, fragrance_id=wishlist.fragrance_id)
@@ -338,7 +391,13 @@ async def add_to_or_edit_wishlist(wishlist: WishlistRequestSchema, request: Requ
     await session.refresh(wishlist_db)
     return wishlist_db
 
-async def remove_from_wishlist(wihlist_id: int,session: AsyncSession, request: Request, current_user: UserModel, csrf_protector: CsrfProtect):
+async def remove_from_wishlist(
+    wihlist_id: int,
+    session: AsyncSession, 
+    request: Request, 
+    current_user: UserModel, 
+    csrf_protector: CsrfProtect
+):
     stmt = select(Wishlist).filter_by(id=wihlist_id, user_id=current_user.id)
     result = await session.execute(stmt)
     wishlist = result.scalar_one_or_none()
