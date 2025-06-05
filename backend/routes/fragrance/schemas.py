@@ -1,6 +1,15 @@
 from pydantic import BaseModel, Field, field_validator
 from typing import List, Dict
 from backend.core.db.models.fragrance import FragranceType, WishListType
+
+
+from fastapi import Query
+from enum import Enum
+
+class Order(Enum):
+    asc = "asc"
+    desc = "desc"
+
 class FragranceSchema(BaseModel):
     id: int
     name: str = Field(min_length=3, max_length=150)

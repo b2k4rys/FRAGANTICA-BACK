@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Request, Query
-from .schemas import FragranceSchema, CompanySchema, FragranceUpdate, FragranceRequestSchema, NoteRequestSchema, NoteGroupRequestSchema, NoteUpdateSchema, ReviewCreateSchema, ReviewUpdateSchema, WishlistRequestSchema, FragrancePaginatesResponseSchema
+from .schemas import FragranceSchema, CompanySchema, FragranceUpdate, FragranceRequestSchema, NoteRequestSchema, NoteGroupRequestSchema, NoteUpdateSchema, ReviewCreateSchema, ReviewUpdateSchema, WishlistRequestSchema, FragrancePaginatesResponseSchema, Order
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from backend.core.db.session import get_async_session
@@ -24,9 +24,9 @@ async def get_fragrances(
     page_size: int = Query(10, ge=1, le=100),
     min_price: int | None = Query(None, ge=0),
     max_price: int | None = Query(None, ge=0),
-    asc_order: bool | None = None,
+    order: Order = Order.asc
 ):
-    return await crud.get_all_fragrances(session, company_name, fragrance_type, page, page_size, min_price, max_price, asc_order)
+    return await crud.get_all_fragrances(session, company_name, fragrance_type, page, page_size, min_price, max_price, order)
 
 @router.get("/all/{fragrance_id}")
 async def get_fragrance(
