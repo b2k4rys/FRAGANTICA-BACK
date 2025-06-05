@@ -78,6 +78,7 @@ async def get_all_fragrances(
     page_size: int = Query(10, ge=1, le=100),
     min_price: int | None = Query(None, ge=0),
     max_price: int | None = Query(None, ge=0),
+    asc_order: bool | None = None,
 ):
     filters = []
     if company_name:
@@ -91,6 +92,10 @@ async def get_all_fragrances(
         filters.append(Fragrance.price >= min_price)
     if max_price is not None:
         filters.append(Fragrance.price <= max_price)
+    order = None
+    if asc_order is not None:
+        order = Fragrance.price.asc() if asc_order else Fragrance.price.desc()
+
 
     total_stmt = (
         select(func.count())
@@ -113,6 +118,8 @@ async def get_all_fragrances(
             .offset(offset)
             .limit(page_size)
         )
+    if order is not None:
+        stmt = stmt.order_by(order)
     
     result = await session.execute(stmt)
     fragrances = result.scalars().all()

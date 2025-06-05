@@ -24,8 +24,9 @@ async def get_fragrances(
     page_size: int = Query(10, ge=1, le=100),
     min_price: int | None = Query(None, ge=0),
     max_price: int | None = Query(None, ge=0),
+    asc_order: bool | None = None,
 ):
-    return await crud.get_all_fragrances(session, company_name, fragrance_type, page, page_size, min_price, max_price)
+    return await crud.get_all_fragrances(session, company_name, fragrance_type, page, page_size, min_price, max_price, asc_order)
 
 @router.get("/all/{fragrance_id}")
 async def get_fragrance(
