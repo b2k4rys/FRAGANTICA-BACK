@@ -75,7 +75,9 @@ async def get_all_fragrances(
     company_name: str | None = None, 
     fragrance_type: FragranceType | None = None,
     page: int = Query(1, ge=1),
-    page_size: int = Query(10, ge=1, le=100)
+    page_size: int = Query(10, ge=1, le=100),
+    min_price: int | None = Query(None, ge=0),
+    max_price: int | None = Query(None, ge=0),
 ):
     filters = []
     if company_name:
@@ -83,6 +85,13 @@ async def get_all_fragrances(
         filters.append(Company.name.ilike(f"%{company_name}%"))
     if fragrance_type:
         filters.append(Fragrance.fragrance_type == fragrance_type)
+    if min_price is not None and max_price is not None and min_price >= max_price:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
+    if min_price is not None:
+        filters.append(Fragrance.price >= min_price)
+    if max_price is not None:
+        filters.append(Fragrance.price <= max_price)
+
     total_stmt = (
         select(func.count())
         .select_from(Fragrance)
