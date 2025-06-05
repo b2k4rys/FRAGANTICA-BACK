@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from backend.core.db.models.fragrance import Fragrance, Company, FragranceType, Note, NoteGroup, Review, Wishlist, FragranceNote
+from backend.core.db.models.fragrance import Fragrance, Company, FragranceType, Note, NoteGroup, Review, Wishlist, FragranceNote, FragranceGender, Gender
 from backend.core.db.models.user import User as UserModel
 from backend.core.configs.config import settings
 from .schemas import CompanySchema, FragranceUpdate, FragranceRequestSchema, NoteRequestSchema, NoteGroupRequestSchema, NoteUpdateSchema, ReviewCreateSchema, ReviewUpdateSchema, WishlistRequestSchema, Order
@@ -424,3 +424,18 @@ async def remove_from_wishlist(
     await session.delete(wishlist)
     await session.commit()
     return Response(status_code=200, content="Item was deleted")
+
+
+
+#                       ==== VOTING ==== 
+async def vote_for_gender(
+    fragrance_id: int,
+    gender: Gender,
+    session: AsyncSession, 
+    current_user: UserModel, 
+):
+    new_gender_vote = FragranceGender(user_id=current_user.id, fragrance_id=fragrance_id, gender=gender)
+    session.add(new_gender_vote)
+    await session.commit()
+    await session.refresh(new_gender_vote)
+    return new_gender_vote

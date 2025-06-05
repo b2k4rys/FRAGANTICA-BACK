@@ -127,3 +127,24 @@ class Wishlist(Base):
 
     user: Mapped["User"] = relationship(back_populates="wishlist")
     fragrance: Mapped["Fragrance"] = relationship(back_populates="users")
+
+
+class Gender(Enum):
+    male = "male"
+    mostly_male = "mostly male"
+    female = "female"
+    mostly_female = "mostly female"
+    unisex = "unisex"
+
+class FragranceGender(Base):
+    __tablename__ = "fragrance_gender"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"), index=True)
+    fragrance_id: Mapped[int] = mapped_column(BigInteger,ForeignKey("fragrance.id"), index=True)
+    gender: Mapped[Gender] = mapped_column(SqlEnum(Gender), nullable=False)
+    __table_args__ = (
+            UniqueConstraint("user_id", "fragrance_id", name="unique_user_fragrance_gender"),
+    )
+
