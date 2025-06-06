@@ -151,3 +151,18 @@ class FragranceGender(Base):
             UniqueConstraint("user_id", "fragrance_id", name="unique_user_fragrance_gender"),
     )
 
+
+class Season(Enum):
+    winter = "winter"
+    spring = "spring"
+    summer = "summer"
+    fall = "fall"
+
+class FragranceSeason(Base):
+    __tablename__ = "fragrance_season"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"), index=True)
+    fragrance_id: Mapped[int] = mapped_column(BigInteger,ForeignKey("fragrance.id"), index=True)
+    season: Mapped[Season] = mapped_column(SqlEnum(Season), nullable=False)

@@ -3,7 +3,7 @@ from .schemas import FragranceSchema, CompanySchema, FragranceUpdate, FragranceR
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from backend.core.db.session import get_async_session
-from backend.core.db.models.fragrance import FragranceType, Gender
+from backend.core.db.models.fragrance import FragranceType, Gender, Season
 from backend.core.db.models.user import User as UserModel
 from backend.core.db.models.user import Role
 from ..auth.services import get_current_user, require_role
@@ -196,7 +196,7 @@ async def remove_review(
 
 #                       ==== VOTING ==== 
 
-@router.post('/voting_gender/{fragrance_id}')
+@router.post('/voting/gender/{fragrance_id}')
 async def vote_for_gender(
     fragrance_id: int, 
     gender: Gender,
@@ -204,3 +204,12 @@ async def vote_for_gender(
     current_user: UserModel = Depends(require_role([Role.USER, Role.ADMIN])), 
     ):
     return await crud.vote_for_gender(fragrance_id, gender, session, current_user)
+
+@router.post('/voting/season/{fragrance_id}')
+async def vote_for_season(
+    fragrance_id: int, 
+    season: Season,
+    session: AsyncSession = Depends(get_async_session), 
+    current_user: UserModel = Depends(require_role([Role.USER, Role.ADMIN])), 
+    ):
+    return await crud.vote_for_season(fragrance_id, season, session, current_user)

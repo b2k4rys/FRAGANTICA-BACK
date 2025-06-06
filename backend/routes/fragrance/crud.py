@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from backend.core.db.models.fragrance import Fragrance, Company, FragranceType, Note, NoteGroup, Review, Wishlist, FragranceNote, FragranceGender, Gender, NoteType
+from backend.core.db.models.fragrance import Fragrance, Company, FragranceType, Note, NoteGroup, Review, Wishlist, FragranceNote, FragranceGender, Gender, NoteType, Season, FragranceSeason
 from backend.core.db.models.user import User as UserModel
 from backend.core.configs.config import settings
 from .schemas import CompanySchema, FragranceUpdate, FragranceRequestSchema, NoteRequestSchema, NoteGroupRequestSchema, NoteUpdateSchema, ReviewCreateSchema, ReviewUpdateSchema, WishlistRequestSchema, Order
@@ -162,6 +162,20 @@ async def change_fragrance(
     session: AsyncSession,
     updated_fragrance_data: FragranceUpdate
 ):
+    """
+    Update a fragrance's details and its associated notes.
+
+    Args:
+        fragrance_id (int): The ID of the fragrance to update.
+        session (AsyncSession): The async database session.
+        updated_fragrance_data (FragranceUpdate): Pydantic model with updated fragrance data.
+
+    Returns:
+        Fragrance: The updated fragrance object.
+
+    Raises:
+        HTTPException: If validation fails (400), fragrance not found (404), or a database error occurs (500).
+    """
     if fragrance_id <= 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -230,7 +244,7 @@ async def change_fragrance(
                     note_to_delete = (await session.execute(
                         select(FragranceNote).filter_by(note_id=note_id, fragrance_id=fragrance_id)
                     )).scalar_one()
-                    session.delete(note_to_delete)
+                    await session.delete(note_to_delete)
             
         except Exception as e:
             await session.rollback()
@@ -291,6 +305,26 @@ async def get_fragrance_by_id(
 
         total_votes = sum(all_genders.values())
 
+        season_counts_stmt =  (
+            select(
+            FragranceSeason.season,
+            func.count(FragranceSeason.season).label("vote_count")
+            )
+            .where(FragranceSeason.fragrance_id == fragrance_id)
+            .group_by(FragranceSeason.season)
+        )
+        season_count_result = await session.execute(season_counts_stmt)
+        season_counts = {row.season: row.vote_count for row in season_count_result}
+
+        all_seasons = {
+            Season.winter: 0,
+            Season.spring: 0,
+            Season.summer: 0, 
+            Season.fall: 0
+        }
+        all_seasons.update(season_counts)
+
+        total_season_vote = sum(all_seasons.values())
         stmt = (
             select(Fragrance)
             .options(
@@ -331,6 +365,27 @@ async def get_fragrance_by_id(
                     else None
                 ),
             },
+            "season_vote": {
+                "total_votes": total_season_vote,
+                "counts": {
+                    "winter": all_seasons[Season.winter],
+                    "spring": all_seasons[Season.spring],
+                    "summer": all_seasons[Season.summer],
+                    "fall": all_seasons[Season.fall],
+                },
+                "percentages": (
+                    {
+                        "winter": round((all_seasons[Season.winter] / total_season_vote * 100), 2) if total_season_vote else 0,
+                        "spring": round((all_seasons[Season.spring] / total_season_vote * 100), 2) if total_season_vote else 0,
+                        "summer": round((all_seasons[Season.summer] / total_season_vote * 100), 2) if total_season_vote else 0,
+                        "fall": round((all_seasons[Season.fall] / total_season_vote * 100), 2) if total_season_vote else 0,
+
+                    }
+                    if total_season_vote > 0
+                    else None
+                ),
+
+            }
         }
 
         return response
@@ -574,6 +629,9 @@ async def remove_from_wishlist(
 
 
 #                       ==== VOTING ==== 
+
+
+#                       ==== GENDER ==== 
 async def vote_for_gender(
     fragrance_id: int,
     gender: Gender,
@@ -592,3 +650,35 @@ async def vote_for_gender(
     await session.commit()
     await session.refresh(new_gender_vote)
     return new_gender_vote
+
+#                       ==== SEASON ==== 
+async def vote_for_season(
+    fragrance_id: int,
+    season: Season,
+    session: AsyncSession, 
+    current_user: UserModel, 
+): 
+    fragrance = await session.get(Fragrance, fragrance_id)
+    if fragrance is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Note with ID {fragrance_id} does not exist"
+        )
+    existing = (await session.execute(select(FragranceSeason).filter_by(fragrance_id=fragrance_id, user_id=current_user.id, season=season))).scalar_one_or_none()
+    if existing:
+        await session.delete(existing)
+        await session.commit()
+        return Response(status_code=200, content="item has been removed")
+    
+    try:
+        new_season_vote = FragranceSeason(user_id=current_user.id, fragrance_id=fragrance_id, season=season)
+        session.add(new_season_vote)
+    except Exception as e:
+        await session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error: {str(e)}"
+        )
+    await session.commit()
+    await session.refresh(new_season_vote)
+    return new_season_vote
