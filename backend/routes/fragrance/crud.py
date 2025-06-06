@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from backend.core.db.models.fragrance import Fragrance, Company, FragranceType, Note, NoteGroup, Review, Wishlist, FragranceNote, FragranceGender, Gender
+from backend.core.db.models.fragrance import Fragrance, Company, FragranceType, Note, NoteGroup, Review, Wishlist, FragranceNote, FragranceGender, Gender, NoteType
 from backend.core.db.models.user import User as UserModel
 from backend.core.configs.config import settings
 from .schemas import CompanySchema, FragranceUpdate, FragranceRequestSchema, NoteRequestSchema, NoteGroupRequestSchema, NoteUpdateSchema, ReviewCreateSchema, ReviewUpdateSchema, WishlistRequestSchema, Order
@@ -186,20 +186,51 @@ async def change_fragrance(
             existing_notes = (await session.execute(select(FragranceNote).filter_by(fragrance_id=fragrance_id))).scalars().all()
             existing_note_ids = {note.note_id for note in existing_notes}
 
-            update_note_ids = {note.note_id for note in update_data["notes"]}
+            update_note_ids = {note["note_id"] for note in update_data["notes"]}
 
             for n in update_data["notes"]:
-                if n["note_id"] not in existing_note_ids:
-                    note = FragranceNote(note_id=n["note_id"], note_type=n["note_type"], fragrance_id=fragrance_id)
-                else:
-                    note = (await session.execute(select(FragranceNote).filter_by(note_id=n["note_id"], fragrance_id=fragrance_id))).scalar_one()
-                    note.note_type = n["note_type"]
-                session.add(note)
+                note_id = n.get("note_id")
+                note_type_str = n.get("note_type")
 
-            for n in existing_note_ids:
-                if n not in update_note_ids:
-                    note = (await session.execute(select(FragranceNote).filter_by(note_id=n, fragrance_id=fragrance_id))).scalar_one()
-                    session.delete(note)
+                if note_id is None:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Note ID is required"
+                    )
+                
+                note = await session.get(Note, note_id)
+                if note is None:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Note with ID {note_id} does not exist"
+                    )
+                
+                if note_type_str is None:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Note type is required"
+                    )
+                try:
+                    note_type = NoteType(note_type_str)
+                except ValueError:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Invalid note type '{note_type_str}'. Must be one of {[e.value for e in NoteType]}"
+                    )
+                if note_id not in existing_note_ids:
+                    note = FragranceNote(note_id=note_id, note_type=note_type_str, fragrance_id=fragrance_id)
+                    session.add(note)
+                else:
+                    existing_note = (await session.execute(select(FragranceNote).filter_by(note_id=n["note_id"], fragrance_id=fragrance_id))).scalar_one()
+                    existing_note.note_type = n["note_type"]
+            
+
+            for note_id in existing_note_ids:
+                if note_id not in update_note_ids:
+                    note_to_delete = (await session.execute(
+                        select(FragranceNote).filter_by(note_id=note_id, fragrance_id=fragrance_id)
+                    )).scalar_one()
+                    session.delete(note_to_delete)
             
         except Exception as e:
             await session.rollback()
