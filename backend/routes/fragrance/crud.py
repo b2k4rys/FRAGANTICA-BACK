@@ -11,6 +11,7 @@ from ..auth.services import get_current_user
 from pydantic import ValidationError, Field
 from fastapi_csrf_protect import CsrfProtect
 import logging
+from typing import Dict
 
 logging.basicConfig(
     level=logging.INFO,
@@ -187,22 +188,106 @@ async def change_fragrance(
     await session.refresh(fragrance)
     return fragrance
 
-
 async def get_fragrance_by_id(
-    fragrance_id: int, 
-    session: AsyncSession
-):
-    stmt = select(Fragrance).options(
-        selectinload(Fragrance.fragrance_reviews),
-        selectinload(Fragrance.notes)
-    ).filter_by(id=fragrance_id)
-    result = await session.execute(stmt)
-    fragrance = result.scalar_one_or_none()
-    if fragrance is None:
-        raise HTTPException(status_code=404, detail="Item not found")
-    return fragrance
+    fragrance_id: int,
+    session: AsyncSession,
+) -> Dict:
+    """
+    Retrieve a fragrance by ID, including its reviews, notes, and gender vote breakdown.
+
+    Args:
+        fragrance_id (int): The ID of the fragrance to retrieve.
+        session (AsyncSession): The async database session.
+
+    Returns:
+        Dict: A dictionary containing the fragrance details and gender vote counts.
+
+    Raises:
+        HTTPException: If the fragrance is not found (404) or a database error occurs (500).
+    """
+
+    if fragrance_id <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Fragrance ID must be a positive integer"
+        )
+
+    try:
+       
+        gender_counts_stmt = (
+            select(
+                FragranceGender.gender,
+                func.count(FragranceGender.gender).label("vote_count")
+            )
+            .where(FragranceGender.fragrance_id == fragrance_id)
+            .group_by(FragranceGender.gender)
+        )
+        gender_counts_result = await session.execute(gender_counts_stmt)
+        gender_counts = {row.gender: row.vote_count for row in gender_counts_result}
+
+        all_genders = {
+            Gender.male: 0,
+            Gender.mostly_male: 0,
+            Gender.female: 0,
+            Gender.mostly_female: 0,
+            Gender.unisex: 0,
+        }
+        all_genders.update(gender_counts) 
+
+        total_votes = sum(all_genders.values())
+
+        stmt = (
+            select(Fragrance)
+            .options(
+                selectinload(Fragrance.fragrance_reviews),
+                selectinload(Fragrance.notes)
+            )
+            .filter_by(id=fragrance_id)
+        )
+        result = await session.execute(stmt)
+        fragrance = result.scalar_one_or_none()
 
 
+        if fragrance is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Fragrance not found"
+            )
+        response = {
+            "fragrance": fragrance,
+            "gender_votes": {
+                "total_votes": total_votes,
+                "counts": {
+                    "male": all_genders[Gender.male],
+                    "mostly_male": all_genders[Gender.mostly_male],
+                    "female": all_genders[Gender.female],
+                    "mostly_female": all_genders[Gender.mostly_female],
+                    "unisex": all_genders[Gender.unisex],
+                },
+                "percentages": (
+                    {
+                        "male": round((all_genders[Gender.male] / total_votes * 100), 2) if total_votes else 0,
+                        "mostly_male": round((all_genders[Gender.mostly_male] / total_votes * 100), 2) if total_votes else 0,
+                        "female": round((all_genders[Gender.female] / total_votes * 100), 2) if total_votes else 0,
+                        "mostly_female": round((all_genders[Gender.mostly_female] / total_votes * 100), 2) if total_votes else 0,
+                        "unisex": round((all_genders[Gender.unisex] / total_votes * 100), 2) if total_votes else 0,
+                    }
+                    if total_votes > 0
+                    else None
+                ),
+            },
+        }
+
+        return response
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        await session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error: {str(e)}"
+        )
 async def delete_fragrance_by_id(
     fragrance_id: int, 
     session: AsyncSession
@@ -434,6 +519,13 @@ async def vote_for_gender(
     session: AsyncSession, 
     current_user: UserModel, 
 ):
+    vote = (await session.execute(select(FragranceGender).filter_by(user_id=current_user.id, fragrance_id=fragrance_id))).scalar_one_or_none()
+    if vote is not None:
+        vote.gender = gender
+        await session.commit()
+        await session.refresh(vote)
+        return vote
+    
     new_gender_vote = FragranceGender(user_id=current_user.id, fragrance_id=fragrance_id, gender=gender)
     session.add(new_gender_vote)
     await session.commit()
