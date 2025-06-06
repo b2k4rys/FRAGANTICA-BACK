@@ -81,6 +81,10 @@ class FragranceNote(Base):
     fragrance_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("fragrance.id"), index=True)
     note_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("note.id"), index=True)
     note_type: Mapped[NoteType] = mapped_column(SqlEnum(NoteType))
+    __table_args__ = (
+            UniqueConstraint("fragrance_id", "note_id", name="unique_fragrance_note"),
+    )
+
 
     fragrance: Mapped["Fragrance"] = relationship(back_populates="notes")
     note: Mapped["Note"] = relationship(back_populates="fragrances")
@@ -120,9 +124,8 @@ class Wishlist(Base):
     user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"), index=True)
     fragrance_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("fragrance.id"), index=True)
     status: Mapped[WishListType] = mapped_column(SqlEnum(WishListType), nullable=False, default=WishListType.WANTED)
-    __table_args__ = (
-            UniqueConstraint("user_id", "fragrance_id", name="unique_user_fragrance"),
-    )
+
+
 
 
     user: Mapped["User"] = relationship(back_populates="wishlist")

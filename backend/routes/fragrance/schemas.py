@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, field_validator
 from typing import List, Dict
-from backend.core.db.models.fragrance import FragranceType, WishListType
+from backend.core.db.models.fragrance import FragranceType, WishListType, NoteType
 
 
 from fastapi import Query
@@ -61,6 +61,7 @@ class FragranceUpdate(BaseModel):
     price: int | None = None
     ml: int | None = None
     picture: str | None = None
+    notes: List["FragranceNoteUpdateSchema"] | None = None
     
 class CompanySchema(BaseModel):
     name: str = Field(min_length=3, max_length=150)
@@ -119,3 +120,6 @@ class ReviewUpdateSchema(BaseModel):
 class WishlistRequestSchema(BaseModel):
     fragrance_id: int
     status: WishListType
+class FragranceNoteUpdateSchema(BaseModel):
+    note_id: int
+    note_type: NoteType

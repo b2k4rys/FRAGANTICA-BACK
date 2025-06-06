@@ -60,6 +60,11 @@ async def remove_company(
     company_id: int,
     session: AsyncSession
 ):
+    if company_id <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Company ID must be a positive integer"
+        )
     stmt = select(Company).filter_by(id=company_id)
     res = await session.execute(stmt)
     company =  res.scalar_one_or_none()
@@ -157,7 +162,12 @@ async def change_fragrance(
     session: AsyncSession,
     updated_fragrance_data: FragranceUpdate
 ):
-    stmt = select(Fragrance).options(selectinload(Fragrance.accords)).filter_by(id=fragrance_id)
+    if fragrance_id <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Fragrance ID must be a positive integer"
+        )
+    stmt = select(Fragrance).options(selectinload(Fragrance.notes)).filter_by(id=fragrance_id)
     result = await session.execute(stmt)
     fragrance = result.scalar_one_or_none()
 
@@ -168,21 +178,36 @@ async def change_fragrance(
 
 
     for key, value in update_data.items():
-        if key != "accords":
+        if key != "notes":
             setattr(fragrance, key, value)
 
+    if "notes" in update_data:
+        try:
+            existing_notes = (await session.execute(select(FragranceNote).filter_by(fragrance_id=fragrance_id))).scalars().all()
+            existing_note_ids = {note.note_id for note in existing_notes}
 
-    if "accords" in update_data:
-        accord_ids = update_data["accords"] or []
-        if accord_ids:
-            result = await session.execute(select(Note).where(Note.id.in_(accord_ids)))
-            accords = result.scalars().all()
-            if len(accords) != len(accord_ids):
-                raise HTTPException(status_code=400, detail="One or more accord_ids are invalid")
-        else:
-            accords = []
+            update_note_ids = {note.note_id for note in update_data["notes"]}
 
-        fragrance.accords = accords
+            for n in update_data["notes"]:
+                if n["note_id"] not in existing_note_ids:
+                    note = FragranceNote(note_id=n["note_id"], note_type=n["note_type"], fragrance_id=fragrance_id)
+                else:
+                    note = (await session.execute(select(FragranceNote).filter_by(note_id=n["note_id"], fragrance_id=fragrance_id))).scalar_one()
+                    note.note_type = n["note_type"]
+                session.add(note)
+
+            for n in existing_note_ids:
+                if n not in update_note_ids:
+                    note = (await session.execute(select(FragranceNote).filter_by(note_id=n, fragrance_id=fragrance_id))).scalar_one()
+                    session.delete(note)
+            
+        except Exception as e:
+            await session.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Internal server error: {str(e)}"
+            )
+
 
     await session.commit()
     await session.refresh(fragrance)
@@ -213,7 +238,6 @@ async def get_fragrance_by_id(
         )
 
     try:
-       
         gender_counts_stmt = (
             select(
                 FragranceGender.gender,
@@ -288,10 +312,16 @@ async def get_fragrance_by_id(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Internal server error: {str(e)}"
         )
+    
 async def delete_fragrance_by_id(
     fragrance_id: int, 
     session: AsyncSession
 ):
+    if fragrance_id <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Fragrance ID must be a positive integer"
+        )
     stmt = select(Fragrance).filter_by(id=fragrance_id)
     result = await session.execute(stmt)
     fragrance = result.scalar_one()
