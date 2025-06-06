@@ -1,5 +1,5 @@
 # src/schemas/user.py
-from pydantic import BaseModel, EmailStr, field_validator, ConfigDict, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator, ConfigDict
 from backend.core.db.models.user import Role
 
 class UserBase(BaseModel):
@@ -36,5 +36,5 @@ class UserResponseSchema(BaseModel):
     username: str
     email: str
     role: Role
-    ava: str
+    ava: str | None = None
     model_config = ConfigDict(from_attributes=True)

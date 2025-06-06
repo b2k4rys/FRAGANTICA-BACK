@@ -4,11 +4,10 @@ from backend.core.db.models.user import User as UserModel
 from backend.core.configs.config import settings
 from .schemas import CompanySchema, FragranceUpdate, FragranceRequestSchema, NoteRequestSchema, NoteGroupRequestSchema, NoteUpdateSchema, ReviewCreateSchema, ReviewUpdateSchema, WishlistRequestSchema, Order
 from sqlalchemy import select, func
-from sqlalchemy.orm import selectinload, joinedload
+from sqlalchemy.orm import selectinload
 from fastapi import HTTPException, Response, Request, status, Query
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from ..auth.services import get_current_user
-from pydantic import ValidationError, Field
+from pydantic import ValidationError
 from fastapi_csrf_protect import CsrfProtect
 import logging
 from typing import Dict
@@ -263,7 +262,7 @@ async def get_fragrance_by_id(
     session: AsyncSession,
 ) -> Dict:
     """
-    Retrieve a fragrance by ID, including its reviews, notes, and gender vote breakdown.
+    Retrieve a fragrance by ID, including its reviews, notes, gender and season vote breakdown.
 
     Args:
         fragrance_id (int): The ID of the fragrance to retrieve.

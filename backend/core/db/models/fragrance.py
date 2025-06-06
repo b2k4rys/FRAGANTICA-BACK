@@ -1,5 +1,5 @@
 from backend.core.db.session import Base
-from sqlalchemy import BigInteger, String, Text, ForeignKey, Integer, Table, Column, Float, UniqueConstraint
+from sqlalchemy import BigInteger, String, Text, ForeignKey, Integer, Float, UniqueConstraint
 from sqlalchemy.orm import mapped_column, Mapped, relationship, validates
 from typing import List
 from enum import Enum
@@ -166,3 +166,63 @@ class FragranceSeason(Base):
     user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"), index=True)
     fragrance_id: Mapped[int] = mapped_column(BigInteger,ForeignKey("fragrance.id"), index=True)
     season: Mapped[Season] = mapped_column(SqlEnum(Season), nullable=False)
+
+
+class Sillage(Enum):
+    intimate = "intimate"
+    moderate = "moderate"
+    strong = "strong"
+    enormous = "enormous"
+
+class FragranceSillage(Base):
+    __tablename__ = "fragrance_sillage"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"), index=True)
+    fragrance_id: Mapped[int] = mapped_column(BigInteger,ForeignKey("fragrance.id"), index=True)
+    sillage: Mapped[Sillage] = mapped_column(SqlEnum(Sillage), nullable=False)
+    __table_args__ = (
+            UniqueConstraint("user_id", "fragrance_id", name="unique_user_fragrance_sillage"),
+    )
+
+class Longevity(Enum):
+    very_weak  = "very weak"
+    weak = "weak"
+    moderate = "moderate"
+    long_lasting = "long lasting"
+    eternal = "eternal"
+
+class FragranceLongevity(Base):
+    __tablename__ = "fragrance_longevity"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"), index=True)
+    fragrance_id: Mapped[int] = mapped_column(BigInteger,ForeignKey("fragrance.id"), index=True)
+    longevity: Mapped[Longevity] = mapped_column(SqlEnum(Longevity), nullable=False)
+    __table_args__ = (
+            UniqueConstraint("user_id", "fragrance_id", name="unique_user_fragrance_longevity"),
+    )
+
+
+
+class PriceValue(Enum):
+    way_overpriced = "way overpriced"
+    overpriced = "overpriced"
+    ok = "ok"
+    good_value = "good value"
+    great_value = "great value"
+
+class FragrancePriceValue(Base):
+    __tablename__ = "fragrance_prive_value"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"), index=True)
+    fragrance_id: Mapped[int] = mapped_column(BigInteger,ForeignKey("fragrance.id"), index=True)
+    price_value: Mapped[PriceValue] = mapped_column(SqlEnum(PriceValue), nullable=False)
+    __table_args__ = (
+            UniqueConstraint("user_id", "fragrance_id", name="unique_user_fragrance_price_value"),
+    )
+

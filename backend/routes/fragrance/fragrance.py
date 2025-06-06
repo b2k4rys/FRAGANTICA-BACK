@@ -1,15 +1,13 @@
 from fastapi import APIRouter, Depends, Request, Query
-from .schemas import FragranceSchema, CompanySchema, FragranceUpdate, FragranceRequestSchema, NoteRequestSchema, NoteGroupRequestSchema, NoteUpdateSchema, ReviewCreateSchema, ReviewUpdateSchema, WishlistRequestSchema, FragrancePaginatesResponseSchema, Order
+from .schemas import CompanySchema, FragranceUpdate, FragranceRequestSchema, NoteRequestSchema, NoteGroupRequestSchema, NoteUpdateSchema, ReviewCreateSchema, ReviewUpdateSchema, WishlistRequestSchema, FragrancePaginatesResponseSchema, Order
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
 from backend.core.db.session import get_async_session
 from backend.core.db.models.fragrance import FragranceType, Gender, Season
 from backend.core.db.models.user import User as UserModel
 from backend.core.db.models.user import Role
-from ..auth.services import get_current_user, require_role
+from ..auth.services import require_role
 from ..fragrance import crud
 from fastapi_csrf_protect import CsrfProtect
-from fastapi_pagination import Page, paginate
 
 router = APIRouter(prefix="/fragrance", tags=['Fragrance routes'])
 
