@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Request, Query
 from .schemas import CompanySchema, FragranceUpdate, FragranceRequestSchema, NoteRequestSchema, NoteGroupRequestSchema, NoteUpdateSchema, ReviewCreateSchema, ReviewUpdateSchema, WishlistRequestSchema, FragrancePaginatesResponseSchema, Order
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.core.db.session import get_async_session
-from backend.core.db.models.fragrance import FragranceType, Gender, Season
+from backend.core.db.models.fragrance import FragranceType, Gender, Season, Longevity, Sillage, PriceValue
 from backend.core.db.models.user import User as UserModel
 from backend.core.db.models.user import Role
 from ..auth.services import require_role
@@ -211,3 +211,30 @@ async def vote_for_season(
     current_user: UserModel = Depends(require_role([Role.USER, Role.ADMIN])), 
     ):
     return await crud.vote_for_season(fragrance_id, season, session, current_user)
+
+@router.post('/voting/longevity/{fragrance_id}')
+async def vote_for_longevity(
+    fragrance_id: int, 
+    longevity: Longevity,
+    session: AsyncSession = Depends(get_async_session), 
+    current_user: UserModel = Depends(require_role([Role.USER, Role.ADMIN])), 
+    ):
+    return await crud.vote_for_longevity(fragrance_id, longevity, session, current_user)
+
+@router.post('/voting/sillage/{fragrance_id}')
+async def vote_for_sillage(
+    fragrance_id: int, 
+    sillage: Sillage,
+    session: AsyncSession = Depends(get_async_session), 
+    current_user: UserModel = Depends(require_role([Role.USER, Role.ADMIN])), 
+    ):
+    return await crud.vote_for_sillage(fragrance_id, sillage, session, current_user)
+
+@router.post('/voting/price_value/{fragrance_id}')
+async def vote_for_price_value(
+    fragrance_id: int, 
+    price_value: PriceValue,
+    session: AsyncSession = Depends(get_async_session), 
+    current_user: UserModel = Depends(require_role([Role.USER, Role.ADMIN])), 
+    ):
+    return await crud.vote_for_price_value(fragrance_id, price_value, session, current_user)

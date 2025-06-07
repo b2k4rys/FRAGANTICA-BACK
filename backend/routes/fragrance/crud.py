@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from backend.core.db.models.fragrance import Fragrance, Company, FragranceType, Note, NoteGroup, Review, Wishlist, FragranceNote, FragranceGender, Gender, NoteType, Season, FragranceSeason
+from backend.core.db.models.fragrance import Fragrance, Company, FragranceType, Note, NoteGroup, Review, Wishlist, FragranceNote, FragranceGender, Gender, NoteType, Season, FragranceSeason, Longevity, Sillage, PriceValue, FragranceLongevity, FragrancePriceValue, FragranceSillage
 from backend.core.db.models.user import User as UserModel
 from backend.core.configs.config import settings
 from .schemas import CompanySchema, FragranceUpdate, FragranceRequestSchema, NoteRequestSchema, NoteGroupRequestSchema, NoteUpdateSchema, ReviewCreateSchema, ReviewUpdateSchema, WishlistRequestSchema, Order
@@ -681,3 +681,73 @@ async def vote_for_season(
     await session.commit()
     await session.refresh(new_season_vote)
     return new_season_vote
+
+async def vote_for_longevity(
+    fragrance_id: int,
+    longevity: Longevity,
+    session: AsyncSession, 
+    current_user: UserModel, 
+):
+    if fragrance_id <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Fragrance ID must be a positive integer"
+        )
+    fragrance = await session.get(Fragrance, fragrance_id)
+    if fragrance is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"fragrance with ID {fragrance_id} does not exist"
+        )
+    vote = FragranceLongevity(fragrance_id=fragrance_id, user_id=current_user.id, longevity=longevity)
+    session.add(vote)
+    await session.commit()
+    await session.refresh(vote)
+    return vote
+
+
+async def vote_for_sillage(
+    fragrance_id: int,
+    sillage: Sillage,
+    session: AsyncSession, 
+    current_user: UserModel, 
+):
+    if fragrance_id <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Fragrance ID must be a positive integer"
+        )
+    fragrance = await session.get(Fragrance, fragrance_id)
+    if fragrance is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"fragrance with ID {fragrance_id} does not exist"
+        )
+    vote = FragranceSillage(fragrance_id=fragrance_id, user_id=current_user.id, sillage=sillage)
+    session.add(vote)
+    await session.commit()
+    await session.refresh(vote)
+    return vote
+
+async def vote_for_price_value(
+    fragrance_id: int,
+    price_value: PriceValue,
+    session: AsyncSession, 
+    current_user: UserModel, 
+):
+    if fragrance_id <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Fragrance ID must be a positive integer"
+        )
+    fragrance = await session.get(Fragrance, fragrance_id)
+    if fragrance is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"fragrance with ID {fragrance_id} does not exist"
+        )
+    vote = FragrancePriceValue(fragrance_id=fragrance_id, user_id=current_user.id, price_value=price_value)
+    session.add(vote)
+    await session.commit()
+    await session.refresh(vote)
+    return vote
