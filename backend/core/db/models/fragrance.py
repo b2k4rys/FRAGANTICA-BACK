@@ -226,3 +226,12 @@ class FragrancePriceValue(Base):
             UniqueConstraint("user_id", "fragrance_id", name="unique_user_fragrance_price_value"),
     )
 
+
+class FragranceSimilar(Base):
+    __tablename__  = "similar fragrance"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"), index=True)
+    fragrance_id: Mapped[int] = mapped_column(BigInteger,ForeignKey("fragrance.id"), index=True)
+    fragrance_that_similar_id: Mapped[int] = mapped_column(BigInteger,ForeignKey("fragrance.id"), index=True)
+    
