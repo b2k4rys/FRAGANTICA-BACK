@@ -236,5 +236,14 @@ async def vote_for_price_value(
     price_value: PriceValue,
     session: AsyncSession = Depends(get_async_session), 
     current_user: UserModel = Depends(require_role([Role.USER, Role.ADMIN])), 
-    ):
+):
     return await crud.vote_for_price_value(fragrance_id, price_value, session, current_user)
+
+@router.post("/voting/vote_for_similar_fragrance/{fragrance_id}")
+async def vote_for_similar_fragrance(
+    fragrance_id: int, 
+    similar_fragrance_id: int,
+    session: AsyncSession = Depends(get_async_session), 
+    current_user: UserModel = Depends(require_role([Role.USER, Role.ADMIN])), 
+):
+    return await crud.vote_for_similar_fragrance(fragrance_id=fragrance_id, similar_fragrance_id=similar_fragrance_id, session=session, current_user=current_user)

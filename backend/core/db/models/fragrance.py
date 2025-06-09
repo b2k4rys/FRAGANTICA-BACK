@@ -1,5 +1,5 @@
 from backend.core.db.session import Base
-from sqlalchemy import BigInteger, String, Text, ForeignKey, Integer, Float, UniqueConstraint
+from sqlalchemy import BigInteger, String, Text, ForeignKey, Integer, Float, UniqueConstraint, CheckConstraint
 from sqlalchemy.orm import mapped_column, Mapped, relationship, validates
 from typing import List
 from enum import Enum
@@ -228,10 +228,20 @@ class FragrancePriceValue(Base):
 
 
 class FragranceSimilar(Base):
-    __tablename__  = "similar fragrance"
+    __tablename__  = "similar_fragrance"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"), index=True)
     fragrance_id: Mapped[int] = mapped_column(BigInteger,ForeignKey("fragrance.id"), index=True)
     fragrance_that_similar_id: Mapped[int] = mapped_column(BigInteger,ForeignKey("fragrance.id"), index=True)
-    
+
+    __table_args__ = (
+        CheckConstraint(
+            "fragrance_id != fragrance_that_similar_id",
+            name="similar_fragrances_constraint"
+        ),
+        UniqueConstraint(
+            "fragrance_id", "fragrance_that_similar_id",
+            name="fragrance_similar_fragrance_constraint"
+        ),
+    )

@@ -1,12 +1,12 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from backend.core.db.models.fragrance import Fragrance, Company, FragranceType, Note, NoteGroup, Review, Wishlist, FragranceNote, FragranceGender, Gender, NoteType, Season, FragranceSeason, Longevity, Sillage, PriceValue, FragranceLongevity, FragrancePriceValue, FragranceSillage
+from backend.core.db.models.fragrance import Fragrance, Company, FragranceType, Note, NoteGroup, Review, Wishlist, FragranceNote, FragranceGender, Gender, NoteType, Season, FragranceSeason, Longevity, Sillage, PriceValue, FragranceLongevity, FragrancePriceValue, FragranceSillage, FragranceSimilar
 from backend.core.db.models.user import User as UserModel
 from backend.core.configs.config import settings
 from .schemas import CompanySchema, FragranceUpdate, FragranceRequestSchema, NoteRequestSchema, NoteGroupRequestSchema, NoteUpdateSchema, ReviewCreateSchema, ReviewUpdateSchema, WishlistRequestSchema, Order
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from fastapi import HTTPException, Response, Request, status, Query
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError, DBAPIError
 from pydantic import ValidationError
 from fastapi_csrf_protect import CsrfProtect
 import logging
@@ -747,6 +747,40 @@ async def vote_for_price_value(
             detail=f"fragrance with ID {fragrance_id} does not exist"
         )
     vote = FragrancePriceValue(fragrance_id=fragrance_id, user_id=current_user.id, price_value=price_value)
+    session.add(vote)
+    await session.commit()
+    await session.refresh(vote)
+    return vote
+
+async def vote_for_similar_fragrance(
+    fragrance_id: int, 
+    similar_fragrance_id: int,
+    session: AsyncSession, 
+    current_user: UserModel, 
+):
+    if fragrance_id <= 0 or similar_fragrance_id <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Fragrance ID must be a positive integer"
+        )
+    if fragrance_id == similar_fragrance_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Fragrance ID's can not be similar"
+        )
+    fragrance = await session.get(Fragrance, fragrance_id)
+    similar_fragrance = await session.get(Fragrance, similar_fragrance_id)
+    if fragrance is None or similar_fragrance is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"fragrance with ID {fragrance_id} does not exist"
+        )
+    
+    try:
+        vote = FragranceSimilar(fragrance_id=fragrance_id, fragrance_that_similar_id=similar_fragrance_id, user_id=current_user.id)
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e)
     session.add(vote)
     await session.commit()
     await session.refresh(vote)
