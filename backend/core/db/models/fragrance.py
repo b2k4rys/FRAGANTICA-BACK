@@ -38,10 +38,22 @@ class Fragrance(Base):
     ml: Mapped[int] = mapped_column(Integer,nullable=True)
     picture: Mapped[str] = mapped_column(String, nullable=True)
     fragrance_reviews: Mapped[List["Review"]] = relationship(back_populates="fragrance")
+    perfumer_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("perfumer.id"), nullable=True)
+
 
     users: Mapped[List["Wishlist"]] = relationship(back_populates="fragrance")
     notes: Mapped[List["FragranceNote"]] = relationship(back_populates="fragrance")
+    perfumer: Mapped["Perfumer"] = relationship(back_populates="fragrance_perfumer") 
 
+class Perfumer(Base):
+    __tablename__  = "perfumer"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, unique=True)
+
+    name: Mapped[str] = mapped_column(String(100))
+    description: Mapped[str] = mapped_column(Text)
+
+    fragrance_perfumer: Mapped[List["Fragrance"]] = relationship(back_populates="perfumer")
 
 class Company(Base):
     __tablename__ = "company"
@@ -245,3 +257,4 @@ class FragranceSimilar(Base):
             name="fragrance_similar_fragrance_constraint"
         ),
     )
+
